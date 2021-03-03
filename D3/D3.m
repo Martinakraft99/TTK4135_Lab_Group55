@@ -1,5 +1,5 @@
 % TTK4135 - Helicopter lab
-% Hints/template for problem 2.
+% Hints/template for problem 3.
 % Updated spring 2018, Andreas L. Fl�ten
 
 %% Initialization and model definition
@@ -56,6 +56,13 @@ P1 = 0;                                % Weight on input
 Q = gen_q(Q1,P1,N,M);                                  % Generate Q, hint: gen_q
 c = zeros((mx+mu)*N,1);                                  % Generate c, this is the linear constant term in the QP
 
+%% LQR
+
+LQR_Q = diag([1;1;1;1]);  %Rank = mx
+LQR_R = diag(1);        %Rank = mu
+
+K = dlqr(A1,B1,LQR_Q,LQR_R);
+
 %% Generate system matrixes for linear model
 Aeq = gen_aeq(A1,B1,N,mx,mu);             % Generate A, hint: gen_aeq
 beq = [A1*x0;zeros(4*N-4,1)];             % Generate b
@@ -90,6 +97,8 @@ x1  = [pi*unit_padding; x1; zero_padding];
 x2  = [zero_padding; x2; zero_padding];
 x3  = [zero_padding; x3; zero_padding];
 x4  = [zero_padding; x4; zero_padding];
+
+x = [x1.';x2.';x3.';x4.'];
 
 %% Plotting
 t = 0:delta_t:delta_t*(length(u)-1);
