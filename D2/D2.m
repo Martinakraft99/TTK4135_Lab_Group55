@@ -1,6 +1,6 @@
 % TTK4135 - Helicopter lab
 % Hints/template for problem 2.
-% Updated spring 2018, Andreas L. Fl?ten
+% Updated spring 2018, Andreas L. Fl�ten
 
 %% Initialization and model definition
 clc 
