@@ -66,7 +66,7 @@ G = gen_q(Q,R,N,M);
 
 
 ofun = @(z)1/2*z.'*G*z - c.'*z;
-econ = @(z)get_elevation_constraint(z,alpha,beta,lambda_t,N,mx);
+econ = @(z)get_elev_constraint(z,alpha,beta,lambda_t,N,mx);
 
 z = fmincon(ofun,z,[],[],[],[],vlb,vub,econ)
 
