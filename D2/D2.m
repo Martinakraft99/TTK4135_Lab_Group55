@@ -20,7 +20,7 @@ mx = size(A1,2); % Number of states (number of columns in A)
 mu = size(B1,2); % Number of inputs(number of columns in B)
 
 % Initial values
-x1_0 = 1;                               % Lambda
+x1_0 = pi;                               % Lambda
 x2_0 = 0;                               % r
 x3_0 = 0;                               % p
 x4_0 = 0;                               % p_dot
@@ -48,10 +48,10 @@ vub(N*mx+M*mu)  = 0;                    % We want the last input to be zero
 
 % Generate the matrix Q and the vector c (objecitve function weights in the QP problem) 
 Q1 = zeros(mx,mx);
-Q1(1,1) = 1;                            % Weight on state x1
-Q1(2,2) = 0;                            % Weight on state x2
-Q1(3,3) = 0;                            % Weight on state x3
-Q1(4,4) = 0;                            % Weight on state x4
+Q1(1,1) = 10;                            % Weight on state x1
+Q1(2,2) = .1;                            % Weight on state x2
+Q1(3,3) = 1;                            % Weight on state x3
+Q1(4,4) = 1;                            % Weight on state x4
 P1 = 0;                                % Weight on input
 Q = gen_q(Q1,P1,N,M);                                  % Generate Q, hint: gen_q
 c = zeros((mx+mu)*N,1);                                  % Generate c, this is the linear constant term in the QP
@@ -90,6 +90,9 @@ x1  = [pi*unit_padding; x1; zero_padding];
 x2  = [zero_padding; x2; zero_padding];
 x3  = [zero_padding; x3; zero_padding];
 x4  = [zero_padding; x4; zero_padding];
+
+time_steps = [0:delta_t:(N+2*num_variables)*delta_t].';
+ts_u = timeseries(u, time_steps)
 
 %% Plotting
 t = 0:delta_t:delta_t*(length(u)-1);
