@@ -94,7 +94,7 @@ NUMST                = 2
 TID01EQ              = 1
 NCSTATES             = 4
 COMPUTER             = PCWIN64
-BUILDARGS            =  EXT_MODE=0 EXTMODE_STATIC_ALLOC=0 TMW_EXTMODE_TESTING=0 EXTMODE_STATIC_ALLOC_SIZE=1000000 EXTMODE_TRANSPORT=0 SHOW_TIMES=0 DEBUG=0 DEBUG_HEAP=0 INCLUDE_MDL_TERMINATE_FCN=1 OPTS="-DTID01EQ=1"
+BUILDARGS            =  EXT_MODE=1 EXTMODE_STATIC_ALLOC=0 TMW_EXTMODE_TESTING=0 EXTMODE_STATIC_ALLOC_SIZE=1000000 EXTMODE_TRANSPORT=0 SHOW_TIMES=0 DEBUG=0 DEBUG_HEAP=0 INCLUDE_MDL_TERMINATE_FCN=1 OPTS="-DEXT_MODE -DON_TARGET_WAIT_FOR_START=1 -DTID01EQ=1"
 MULTITASKING         = 0
 RELEASE_VERSION      = R2020b
 MAT_FILE             = 0
@@ -335,6 +335,14 @@ $(PRODUCT) : $(OBJS)
 	@echo ### Compiling $<
 	$(CC) $(CFLAGS) $<
 
+{$(MATLAB_ROOT)\rtw\c\src\ext_mode\common}.c.obj :
+	@echo ### Compiling $<
+	$(CC) $(CFLAGS) $<
+
+{$(MATLAB_ROOT)\toolbox\coder\rtiostream\src\utils}.c.obj :
+	@echo ### Compiling $<
+	$(CC) $(CFLAGS) $<
+
 rt_sim.obj : $(MATLAB_ROOT)\rtw\c\src\rt_sim.c
 	@echo ### Compiling $(MATLAB_ROOT)\rtw\c\src\rt_sim.c
 	$(CC) $(CFLAGS) $(MATLAB_ROOT)\rtw\c\src\rt_sim.c
@@ -346,6 +354,14 @@ rt_sim.obj : $(MATLAB_ROOT)\rtw\c\src\rt_sim.c
 	$(CC) $(CPPFLAGS) $<
 
 {$(MATLAB_ROOT)\simulink\src}.cpp.obj :
+	@echo ### Compiling $<
+	$(CC) $(CPPFLAGS) $<
+
+{$(MATLAB_ROOT)\rtw\c\src\ext_mode\common}.cpp.obj :
+	@echo ### Compiling $<
+	$(CC) $(CPPFLAGS) $<
+
+{$(MATLAB_ROOT)\toolbox\coder\rtiostream\src\utils}.cpp.obj :
 	@echo ### Compiling $<
 	$(CC) $(CPPFLAGS) $<
 

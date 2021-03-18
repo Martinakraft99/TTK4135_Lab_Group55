@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD4".
  *
- * Model version              : 11.8
+ * Model version              : 11.11
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Thu Mar  4 17:13:47 2021
+ * C source code generated on : Thu Mar 18 15:59:54 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -296,23 +296,28 @@ P_helicopterD4_T helicopterD4_P = {
    */
   0.5,
 
+  /* Expression: 180/pi
+   * Referenced by: '<S12>/Gain'
+   */
+  57.295779513082323,
+
   /* Expression: 5
-   * Referenced by: '<S4>/Front motor: Saturation'
+   * Referenced by: '<S4>/Back motor: Saturation'
    */
   5.0,
 
   /* Expression: -5
-   * Referenced by: '<S4>/Front motor: Saturation'
+   * Referenced by: '<S4>/Back motor: Saturation'
    */
   -5.0,
 
   /* Expression: 5
-   * Referenced by: '<S4>/Back motor: Saturation'
+   * Referenced by: '<S4>/Front motor: Saturation'
    */
   5.0,
 
   /* Expression: -5
-   * Referenced by: '<S4>/Back motor: Saturation'
+   * Referenced by: '<S4>/Front motor: Saturation'
    */
   -5.0,
 

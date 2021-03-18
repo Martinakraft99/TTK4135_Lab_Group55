@@ -4,8 +4,8 @@
  * This file was generated automatically by QUARC. It serves as the main
  * entry point for the real-time code.
  *
- * Date:           Thu Mar  4 17:13:46 2021
- * Model version:  11.8
+ * Date:           Thu Mar 18 15:59:54 2021
+ * Model version:  11.11
  * Matlab version: 9.4 (R2020b) 29-Jul-2020
  ****************************************************************************/
 
@@ -22,6 +22,7 @@
 #include "rtmodel.h"
 #include "rt_sim.h"
 #include "rt_nonfinite.h"
+#include "ext_work.h"
 #include "quanser_timer.h"
 #include "quanser_semaphore.h"
 #include "quanser_thread.h"
@@ -110,6 +111,30 @@ static struct {
   char submessage[192];
 } GBLbuf;
 
+EXTERN void rtExtModeStart(void);
+EXTERN void rtExtModeQuarcCleanup(int_T numSampTimes);
+EXTERN boolean_T rtExtModeQuarcStartup(RTWExtModeInfo *ei,
+  int_T num_sample_times,
+  boolean_T *stopReqPtr,
+  int_T priority,
+  int32_T stack_size,
+  boolean_T enable_printing);
+EXTERN void rtExtModeQuarcParseArgs(int_T argc,
+  const char_T *argv[],
+  const char_T *default_uri);
+EXTERN void rtExtSetReturnStatus(const char * message);
+static void rtExtModeSingleTaskUpload(RT_MODEL * S)
+{
+  int stIdx;
+  rtExtModeUploadCheckTrigger(rtmGetNumSampleTimes(S));
+  for (stIdx=0; stIdx < 2; stIdx++) {
+    if (rtmIsSampleHit(S, stIdx, 0     /*unused*/
+                       )) {
+      rtExtModeUpload(stIdx, rtmGetTaskTime(S,stIdx));
+    }
+  }
+}
+
 EXTERN void
   _do_assertion(const char * expression, const char * file_name, int line_number)
 {
@@ -140,6 +165,7 @@ static void rt_OneStep(RT_MODEL *S)
   tnext = rt_SimGetNextSampleHit();
   rtsiSetSolverStopTime(rtmGetRTWSolverInfo(S),tnext);
   outputs(S, 0);
+  rtExtModeSingleTaskUpload(S);
   update(S, 0);
   rt_SimUpdateDiscreteTaskSampleHits(rtmGetNumSampleTimes(S),
     rtmGetTimingData(S),
@@ -148,6 +174,8 @@ static void rt_OneStep(RT_MODEL *S)
   if (rtmGetSampleTime(S,0) == CONTINUOUS_SAMPLE_TIME) {
     rt_UpdateContinuousStates(S);
   }
+
+  rtExtModeCheckEndTrigger();
 }                                      /* end rtOneStep */
 
 static void
@@ -166,6 +194,7 @@ static void
      a start signal from the host.
    */
   GBLbuf.stopExecutionFlag = 1;
+  rtExtModeStart();
   hil_task_stop(helicopterD4_DW.HILReadEncoderTimebase_Task)
     ;
 }
@@ -185,10 +214,13 @@ int
   t_error result;
 
   /*
-   * min_priority = minimum allowable priority of lowest priority model task
-   * max_priority = maximum allowable priority of lowest priority model task
+   * Make controller threads higher priority than external mode threads:
+   *   ext_priority = priority of lowest priority external mode thread
+   *   min_priority = minimum allowable priority of lowest priority model task
+   *   max_priority = maximum allowable priority of lowest priority model task
    */
-  int min_priority = qsched_get_priority_min(QSCHED_FIFO);
+  int ext_priority = qsched_get_priority_min(QSCHED_FIFO);
+  int min_priority = ext_priority + 2;
   int max_priority = qsched_get_priority_max(QSCHED_FIFO) - 0;
   qsigset_t signal_set;
   qsigaction_t action;
@@ -295,13 +327,10 @@ int
       _chdir(path_name);
       argv[count-2] = NULL;
       argv[count-1] = NULL;
-    } else if (strcmp(option, "-w") == 0) {/* wait for start signal */
-      argv[count-1] = NULL;
-    } else if ((strcmp(option, "-uri") == 0) && (count != argc)) {/* external mode URI */
-      argv[count-1] = NULL;
-      argv[count++] = NULL;
     }
   }
+
+  rtExtModeQuarcParseArgs(argc, (const char **) argv, "shmem://helicopterD4:1");
 
   /*
    * Check for unprocessed ("unhandled") args.
@@ -327,8 +356,6 @@ int
                    "\t-pri 5                - sets the minimum thread priority\n");
     (void) fprintf(stderr,
                    "\t-ss  65536            - sets the stack size for model threads\n");
-    (void) fprintf(stderr,
-                   "\nThe following options are ignored because external mode is not enabled:\n");
     (void) fprintf(stderr,
                    "\t-w                    - wait for host to connect before starting\n");
     (void) fprintf(stderr,
@@ -397,61 +424,74 @@ int
   qsched_set_sleep_mode(SLEEP_MODE_DISABLED);
   qthread_cleanup_push(cleanup_sleep_mode, NULL);
   rt_CreateIntegrationData(S);
-  (void) ssPrintf("\n** starting the model **\n");
-  start(S);
-  if (rtmGetErrorStatus(S) == NULL) {
-    /*************************************************************************
-     * Execute the model.
-     *************************************************************************/
-    if (rtmGetTFinal(S) == RUN_FOREVER) {
-      (void) ssPrintf("\n**May run forever. Model stop time set to infinity.**\n");
-    }
-
-    /* Perform task-specific initialization */
-    scheduling.sched_priority = scheduling_priority;
-    qthread_setschedparam(qthread_self(), QSCHED_FIFO, &scheduling);
-    (void) ssPrintf("Creating main thread with priority %d and period %g...\n",
-                    scheduling_priority, rtmGetStepSize(S));
-    fflush(stdout);
-    result = hil_task_start(helicopterD4_DW.HILReadEncoderTimebase_Task,
-      (t_clock) helicopterD4_P.HILReadEncoderTimebase_Clock, 500.0, -1)
-      ;
-    if (result == 0) {
-      /* Enter the periodic loop */
-      while (true) {
-        if (GBLbuf.stopExecutionFlag || rtmGetStopRequested(S)) {
-          break;
-        }
-
-        if (rtmGetTFinal(S) != RUN_FOREVER && rtmGetTFinal(S) - rtmGetT(S) <=
-            rtmGetT(S)*DBL_EPSILON) {
-          break;
-        }
-
-        rt_OneStep(S);
+  fflush(stdout);
+  if (rtExtModeQuarcStartup(rtmGetRTWExtModeInfo(S),
+       rtmGetNumSampleTimes(S),
+       &rtmGetStopRequested(S),
+       ext_priority,                   /* external mode thread priority */
+       stack_size,
+       SS_HAVESTDIO)) {
+    (void) ssPrintf("\n** starting the model **\n");
+    start(S);
+    if (rtmGetErrorStatus(S) == NULL) {
+      /*************************************************************************
+       * Execute the model.
+       *************************************************************************/
+      if (rtmGetTFinal(S) == RUN_FOREVER) {
+        (void) ssPrintf("\n**May run forever. Model stop time set to infinity.**\n");
       }
 
-      if (rtmGetStopRequested(S) == false && rtmGetErrorStatus(S) == NULL) {
-        /* Execute model last time step if final time expired */
-        rt_OneStep(S);
-      }
-
-      /* disarm the timebase */
-      hil_task_stop(helicopterD4_DW.HILReadEncoderTimebase_Task)
+      /* Perform task-specific initialization */
+      scheduling.sched_priority = scheduling_priority;
+      qthread_setschedparam(qthread_self(), QSCHED_FIFO, &scheduling);
+      (void) ssPrintf("Creating main thread with priority %d and period %g...\n",
+                      scheduling_priority, rtmGetStepSize(S));
+      fflush(stdout);
+      result = hil_task_start(helicopterD4_DW.HILReadEncoderTimebase_Task,
+        (t_clock) helicopterD4_P.HILReadEncoderTimebase_Clock, 500.0, -1)
         ;
-      (void) ssPrintf("Main thread exited\n");
-    } else {
-      msg_get_error_messageA(NULL, result, GBLbuf.submessage, sizeof
-        (GBLbuf.submessage));
-      string_format(GBLbuf.message, sizeof(GBLbuf.message),
-                    "Unable to start timebase. %s", GBLbuf.submessage);
-      rtmSetErrorStatus(S, GBLbuf.message);
+      if (result == 0) {
+        /* Enter the periodic loop */
+        while (true) {
+          if (GBLbuf.stopExecutionFlag || rtmGetStopRequested(S)) {
+            break;
+          }
+
+          if (rtmGetTFinal(S) != RUN_FOREVER && rtmGetTFinal(S) - rtmGetT(S) <=
+              rtmGetT(S)*DBL_EPSILON) {
+            break;
+          }
+
+          rt_OneStep(S);
+        }
+
+        if (rtmGetStopRequested(S) == false && rtmGetErrorStatus(S) == NULL) {
+          /* Execute model last time step if final time expired */
+          rt_OneStep(S);
+        }
+
+        /* disarm the timebase */
+        hil_task_stop(helicopterD4_DW.HILReadEncoderTimebase_Task)
+          ;
+        (void) ssPrintf("Main thread exited\n");
+      } else {
+        msg_get_error_messageA(NULL, result, GBLbuf.submessage, sizeof
+          (GBLbuf.submessage));
+        string_format(GBLbuf.message, sizeof(GBLbuf.message),
+                      "Unable to start timebase. %s", GBLbuf.submessage);
+        rtmSetErrorStatus(S, GBLbuf.message);
+      }
+
+      GBLbuf.stopExecutionFlag = 1;
+
+      /* Perform task-specific cleanup */
     }
-
-    GBLbuf.stopExecutionFlag = 1;
-
-    /* Perform task-specific cleanup */
+  } else {
+    rtmSetErrorStatus(S, "Unable to initialize external mode.");
   }
+
+  rtExtSetReturnStatus(rtmGetErrorStatus(S));
+  rtExtModeQuarcCleanup(rtmGetNumSampleTimes(S));
 
   /********************
    * Cleanup and exit *
