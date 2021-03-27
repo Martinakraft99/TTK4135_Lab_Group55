@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD3".
  *
- * Model version              : 11.5
+ * Model version              : 11.6
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Thu Mar  4 14:54:02 2021
+ * C source code generated on : Sat Mar 27 15:01:32 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -20,6 +20,7 @@
 
 #include "helicopterD3.h"
 #include "helicopterD3_private.h"
+#include "helicopterD3_dt.h"
 
 /* Block signals (default storage) */
 B_helicopterD3_T helicopterD3_B;
@@ -33,6 +34,33 @@ DW_helicopterD3_T helicopterD3_DW;
 /* Real-time model */
 static RT_MODEL_helicopterD3_T helicopterD3_M_;
 RT_MODEL_helicopterD3_T *const helicopterD3_M = &helicopterD3_M_;
+
+/*
+ * Writes out MAT-file header.  Returns success or failure.
+ * Returns:
+ *      0 - success
+ *      1 - failure
+ */
+int_T rt_WriteMat4FileHeader(FILE *fp, int32_T m, int32_T n, const char *name)
+{
+  typedef enum { ELITTLE_ENDIAN, EBIG_ENDIAN } ByteOrder;
+
+  int16_T one = 1;
+  ByteOrder byteOrder = (*((int8_T *)&one)==1) ? ELITTLE_ENDIAN : EBIG_ENDIAN;
+  int32_T type = (byteOrder == ELITTLE_ENDIAN) ? 0: 1000;
+  int32_T imagf = 0;
+  int32_T name_len = (int32_T)strlen(name) + 1;
+  if ((fwrite(&type, sizeof(int32_T), 1, fp) == 0) ||
+      (fwrite(&m, sizeof(int32_T), 1, fp) == 0) ||
+      (fwrite(&n, sizeof(int32_T), 1, fp) == 0) ||
+      (fwrite(&imagf, sizeof(int32_T), 1, fp) == 0) ||
+      (fwrite(&name_len, sizeof(int32_T), 1, fp) == 0) ||
+      (fwrite(name, sizeof(char), name_len, fp) == 0)) {
+    return(1);
+  } else {
+    return(0);
+  }
+}                                      /* end rt_WriteMat4FileHeader */
 
 /*
  * This function updates continuous states using the ODE1 fixed-step
@@ -63,13 +91,14 @@ void helicopterD3_output(void)
 {
   /* local block i/o variables */
   real_T rtb_Sum[4];
-  real_T rtb_Clock;
+  real_T rtb_Frontgain;
   real_T rtb_HILReadEncoderTimebase_o1;
   real_T rtb_HILReadEncoderTimebase_o2;
   real_T rtb_HILReadEncoderTimebase_o3;
-  real_T rtb_Gain1_idx_2;
-  real_T rtb_Gain1_idx_3;
-  real_T rtb_Sum_b;
+  real_T rtb_Backgain;
+  real_T rtb_Clock;
+  real_T rtb_Derivative;
+  real_T *lastU;
   int8_T rtAction;
   if (rtmIsMajorTimeStep(helicopterD3_M)) {
     /* set solver stop time */
@@ -90,6 +119,8 @@ void helicopterD3_output(void)
     helicopterD3_M->Timing.t[0] = rtsiGetT(&helicopterD3_M->solverInfo);
   }
 
+  /* Reset subsysRan breadcrumbs */
+  srClearBC(helicopterD3_DW.IfActionSubsystem_SubsysRanBC);
   if (rtmIsMajorTimeStep(helicopterD3_M)) {
     /* S-Function (hil_read_encoder_timebase_block): '<S4>/HIL Read Encoder Timebase' */
 
@@ -118,50 +149,103 @@ void helicopterD3_output(void)
     helicopterD3_B.TravelCounttorad = helicopterD3_P.travel_gain *
       rtb_HILReadEncoderTimebase_o1 * helicopterD3_P.TravelCounttorad_Gain;
 
+    /* Gain: '<S13>/Gain' */
+    helicopterD3_B.Gain = helicopterD3_P.Gain_Gain *
+      helicopterD3_B.TravelCounttorad;
+
     /* Sum: '<Root>/Sum4' incorporates:
      *  Constant: '<Root>/Pi'
-     *  Gain: '<S13>/Gain'
      */
-    helicopterD3_B.Sum4 = helicopterD3_P.Gain_Gain *
-      helicopterD3_B.TravelCounttorad + helicopterD3_P.Pi_Value;
+    helicopterD3_B.Sum4 = helicopterD3_P.Pi_Value + helicopterD3_B.Gain;
 
     /* Gain: '<S4>/Pitch: Count to rad' */
     helicopterD3_B.PitchCounttorad = helicopterD3_P.PitchCounttorad_Gain *
       rtb_HILReadEncoderTimebase_o2;
 
     /* Gain: '<S10>/Gain' */
-    helicopterD3_B.Gain = helicopterD3_P.Gain_Gain_a *
+    helicopterD3_B.Gain_i = helicopterD3_P.Gain_Gain_a *
       helicopterD3_B.PitchCounttorad;
+  }
 
+  /* Gain: '<S14>/Gain' incorporates:
+   *  TransferFcn: '<S4>/Travel: Transfer Fcn'
+   */
+  helicopterD3_B.Gain_d = (helicopterD3_P.TravelTransferFcn_C *
+    helicopterD3_X.TravelTransferFcn_CSTATE + helicopterD3_P.TravelTransferFcn_D
+    * helicopterD3_B.TravelCounttorad) * helicopterD3_P.Gain_Gain_l;
+
+  /* Gain: '<S11>/Gain' incorporates:
+   *  TransferFcn: '<S4>/Pitch: Transfer Fcn'
+   */
+  helicopterD3_B.Gain_b = (helicopterD3_P.PitchTransferFcn_C *
+    helicopterD3_X.PitchTransferFcn_CSTATE + helicopterD3_P.PitchTransferFcn_D *
+    helicopterD3_B.PitchCounttorad) * helicopterD3_P.Gain_Gain_ae;
+  if (rtmIsMajorTimeStep(helicopterD3_M)) {
     /* Gain: '<S4>/Elevation: Count to rad' incorporates:
      *  Gain: '<S4>/Elevation_gain'
      */
     helicopterD3_B.ElevationCounttorad = helicopterD3_P.elevation_gain *
       rtb_HILReadEncoderTimebase_o3 * helicopterD3_P.ElevationCounttorad_Gain;
 
+    /* Gain: '<S8>/Gain' */
+    helicopterD3_B.Gain_e = helicopterD3_P.Gain_Gain_lv *
+      helicopterD3_B.ElevationCounttorad;
+
     /* Sum: '<Root>/Sum' incorporates:
      *  Constant: '<Root>/elavation_offset [deg]'
-     *  Gain: '<S8>/Gain'
      */
-    helicopterD3_B.Sum = helicopterD3_P.Gain_Gain_lv *
-      helicopterD3_B.ElevationCounttorad +
+    helicopterD3_B.Sum = helicopterD3_B.Gain_e +
       helicopterD3_P.elavation_offsetdeg_Value;
   }
 
-  /* Clock: '<S3>/Clock' incorporates:
-   *  Gain: '<S11>/Gain'
-   *  TransferFcn: '<S4>/Pitch: Transfer Fcn'
+  /* Gain: '<S9>/Gain' incorporates:
+   *  TransferFcn: '<S4>/Elevation: Transfer Fcn'
    */
-  rtb_Clock = 0.0;
-  rtb_Clock += helicopterD3_P.PitchTransferFcn_C *
-    helicopterD3_X.PitchTransferFcn_CSTATE;
-  rtb_Clock += helicopterD3_P.PitchTransferFcn_D *
-    helicopterD3_B.PitchCounttorad;
-  rtb_Clock *= helicopterD3_P.Gain_Gain_ae;
+  helicopterD3_B.Gain_dg = (helicopterD3_P.ElevationTransferFcn_C *
+    helicopterD3_X.ElevationTransferFcn_CSTATE +
+    helicopterD3_P.ElevationTransferFcn_D * helicopterD3_B.ElevationCounttorad) *
+    helicopterD3_P.Gain_Gain_n;
 
   /* Gain: '<S2>/Gain1' */
-  rtb_Gain1_idx_2 = helicopterD3_P.Gain1_Gain * helicopterD3_B.Gain;
-  rtb_Gain1_idx_3 = helicopterD3_P.Gain1_Gain * rtb_Clock;
+  helicopterD3_B.Gain1[0] = helicopterD3_P.Gain1_Gain * helicopterD3_B.Sum4;
+  helicopterD3_B.Gain1[1] = helicopterD3_P.Gain1_Gain * helicopterD3_B.Gain_d;
+  helicopterD3_B.Gain1[2] = helicopterD3_P.Gain1_Gain * helicopterD3_B.Gain_i;
+  helicopterD3_B.Gain1[3] = helicopterD3_P.Gain1_Gain * helicopterD3_B.Gain_b;
+  helicopterD3_B.Gain1[4] = helicopterD3_P.Gain1_Gain * helicopterD3_B.Sum;
+  helicopterD3_B.Gain1[5] = helicopterD3_P.Gain1_Gain * helicopterD3_B.Gain_dg;
+  if (rtmIsMajorTimeStep(helicopterD3_M)) {
+    /* ToFile: '<Root>/       ' */
+    {
+      if (!(++helicopterD3_DW._IWORK.Decimation % 1) &&
+          (helicopterD3_DW._IWORK.Count * (6 + 1)) + 1 < 100000000 ) {
+        FILE *fp = (FILE *) helicopterD3_DW._PWORK.FilePtr;
+        if (fp != (NULL)) {
+          real_T u[6 + 1];
+          helicopterD3_DW._IWORK.Decimation = 0;
+          u[0] = helicopterD3_M->Timing.t[1];
+          u[1] = helicopterD3_B.Gain1[0];
+          u[2] = helicopterD3_B.Gain1[1];
+          u[3] = helicopterD3_B.Gain1[2];
+          u[4] = helicopterD3_B.Gain1[3];
+          u[5] = helicopterD3_B.Gain1[4];
+          u[6] = helicopterD3_B.Gain1[5];
+          if (fwrite(u, sizeof(real_T), 6 + 1, fp) != 6 + 1) {
+            rtmSetErrorStatus(helicopterD3_M,
+                              "Error writing to MAT-file x_enc.mat");
+            return;
+          }
+
+          if (((++helicopterD3_DW._IWORK.Count) * (6 + 1))+1 >= 100000000) {
+            (void)fprintf(stdout,
+                          "*** The ToFile block will stop logging data before\n"
+                          "    the simulation has ended, because it has reached\n"
+                          "    the maximum number of elements (100000000)\n"
+                          "    allowed in MAT-file x_enc.mat.\n");
+          }
+        }
+      }
+    }
+  }
 
   /* FromWorkspace: '<S6>/From Workspace1' */
   {
@@ -233,19 +317,11 @@ void helicopterD3_output(void)
     }
   }
 
-  /* Sum: '<S6>/Sum' incorporates:
-   *  Gain: '<S14>/Gain'
-   *  Gain: '<S2>/Gain1'
-   *  TransferFcn: '<S4>/Travel: Transfer Fcn'
-   */
-  rtb_Sum[0] = helicopterD3_P.Gain1_Gain * helicopterD3_B.Sum4 - rtb_Sum[0];
-  rtb_Sum[1] = (helicopterD3_P.TravelTransferFcn_C *
-                helicopterD3_X.TravelTransferFcn_CSTATE +
-                helicopterD3_P.TravelTransferFcn_D *
-                helicopterD3_B.TravelCounttorad) * helicopterD3_P.Gain_Gain_l *
-    helicopterD3_P.Gain1_Gain - rtb_Sum[1];
-  rtb_Sum[2] = rtb_Gain1_idx_2 - rtb_Sum[2];
-  rtb_Sum[3] = rtb_Gain1_idx_3 - rtb_Sum[3];
+  /* Sum: '<S6>/Sum' */
+  rtb_Sum[0] = helicopterD3_B.Gain1[0] - rtb_Sum[0];
+  rtb_Sum[1] = helicopterD3_B.Gain1[1] - rtb_Sum[1];
+  rtb_Sum[2] = helicopterD3_B.Gain1[2] - rtb_Sum[2];
+  rtb_Sum[3] = helicopterD3_B.Gain1[3] - rtb_Sum[3];
 
   /* FromWorkspace: '<Root>/From Workspace' */
   {
@@ -279,9 +355,9 @@ void helicopterD3_output(void)
       real_T t2 = pTimeValues[currTimeIndex + 1];
       if (t1 == t2) {
         if (t < t1) {
-          rtb_Clock = pDataValues[currTimeIndex];
+          rtb_Frontgain = pDataValues[currTimeIndex];
         } else {
-          rtb_Clock = pDataValues[currTimeIndex + 1];
+          rtb_Frontgain = pDataValues[currTimeIndex + 1];
         }
       } else {
         real_T f1 = (t2 - t) / (t2 - t1);
@@ -291,26 +367,63 @@ void helicopterD3_output(void)
         int_T TimeIndex= currTimeIndex;
         d1 = pDataValues[TimeIndex];
         d2 = pDataValues[TimeIndex + 1];
-        rtb_Clock = (real_T) rtInterpolate(d1, d2, f1, f2);
+        rtb_Frontgain = (real_T) rtInterpolate(d1, d2, f1, f2);
         pDataValues += 141;
       }
     }
   }
 
-  /* Sum: '<Root>/Sum1' incorporates:
+  /* Sum: '<Root>/Sum3' incorporates:
+   *  Gain: '<S6>/Gain'
+   */
+  helicopterD3_B.u = rtb_Frontgain - (((helicopterD3_P.K[0] * rtb_Sum[0] +
+    helicopterD3_P.K[1] * rtb_Sum[1]) + helicopterD3_P.K[2] * rtb_Sum[2]) +
+    helicopterD3_P.K[3] * rtb_Sum[3]);
+  if (rtmIsMajorTimeStep(helicopterD3_M)) {
+    /* ToFile: '<Root>/            ' */
+    {
+      if (!(++helicopterD3_DW._IWORK_f.Decimation % 1) &&
+          (helicopterD3_DW._IWORK_f.Count * (1 + 1)) + 1 < 100000000 ) {
+        FILE *fp = (FILE *) helicopterD3_DW._PWORK_f.FilePtr;
+        if (fp != (NULL)) {
+          real_T u[1 + 1];
+          helicopterD3_DW._IWORK_f.Decimation = 0;
+          u[0] = helicopterD3_M->Timing.t[1];
+          u[1] = helicopterD3_B.u;
+          if (fwrite(u, sizeof(real_T), 1 + 1, fp) != 1 + 1) {
+            rtmSetErrorStatus(helicopterD3_M,
+                              "Error writing to MAT-file u_vec.mat");
+            return;
+          }
+
+          if (((++helicopterD3_DW._IWORK_f.Count) * (1 + 1))+1 >= 100000000) {
+            (void)fprintf(stdout,
+                          "*** The ToFile block will stop logging data before\n"
+                          "    the simulation has ended, because it has reached\n"
+                          "    the maximum number of elements (100000000)\n"
+                          "    allowed in MAT-file u_vec.mat.\n");
+          }
+        }
+      }
+    }
+  }
+
+  /* Gain: '<S1>/Front gain' incorporates:
+   *  Sum: '<S5>/Sum2'
+   */
+  rtb_Frontgain = helicopterD3_B.u - helicopterD3_B.Gain1[2];
+
+  /* Gain: '<S5>/K_pp' */
+  rtb_Clock = helicopterD3_P.K_pp * rtb_Frontgain;
+
+  /* Gain: '<S1>/Front gain' incorporates:
    *  Constant: '<Root>/Vd_bias'
    *  Gain: '<S5>/K_pd'
-   *  Gain: '<S5>/K_pp'
-   *  Gain: '<S6>/Gain'
-   *  Sum: '<Root>/Sum3'
-   *  Sum: '<S5>/Sum2'
+   *  Sum: '<Root>/Sum1'
    *  Sum: '<S5>/Sum3'
    */
-  rtb_Gain1_idx_2 = (((rtb_Clock - (((helicopterD3_P.K[0] * rtb_Sum[0] +
-    helicopterD3_P.K[1] * rtb_Sum[1]) + helicopterD3_P.K[2] * rtb_Sum[2]) +
-    helicopterD3_P.K[3] * rtb_Sum[3])) - rtb_Gain1_idx_2) * helicopterD3_P.K_pp
-                     - helicopterD3_P.K_pd * rtb_Gain1_idx_3) +
-    helicopterD3_P.Vd_ff;
+  rtb_Frontgain = helicopterD3_P.K_pd * helicopterD3_B.Gain1[3];
+  rtb_Frontgain = (rtb_Clock - rtb_Frontgain) + helicopterD3_P.Vd_ff;
 
   /* Integrator: '<S3>/Integrator' */
   /* Limited  Integrator  */
@@ -323,44 +436,37 @@ void helicopterD3_output(void)
     }
   }
 
-  /* Clock: '<S3>/Clock' incorporates:
-   *  Integrator: '<S3>/Integrator'
-   */
-  rtb_Clock = helicopterD3_X.Integrator_CSTATE;
-
   /* Sum: '<S3>/Sum' incorporates:
    *  Constant: '<Root>/elevation_ref'
-   *  Gain: '<S2>/Gain1'
    */
-  rtb_Sum_b = helicopterD3_P.elevation_ref_Value - helicopterD3_P.Gain1_Gain *
-    helicopterD3_B.Sum;
+  rtb_Derivative = helicopterD3_P.elevation_ref_Value - helicopterD3_B.Gain1[4];
 
   /* Sum: '<Root>/Sum2' incorporates:
    *  Constant: '<Root>/Vs_bias'
-   *  Gain: '<S2>/Gain1'
    *  Gain: '<S3>/K_ed'
    *  Gain: '<S3>/K_ep'
-   *  Gain: '<S9>/Gain'
+   *  Integrator: '<S3>/Integrator'
    *  Sum: '<S3>/Sum1'
-   *  TransferFcn: '<S4>/Elevation: Transfer Fcn'
    */
-  rtb_Gain1_idx_3 = ((helicopterD3_P.K_ep * rtb_Sum_b + rtb_Clock) -
-                     (helicopterD3_P.ElevationTransferFcn_C *
-                      helicopterD3_X.ElevationTransferFcn_CSTATE +
-                      helicopterD3_P.ElevationTransferFcn_D *
-                      helicopterD3_B.ElevationCounttorad) *
-                     helicopterD3_P.Gain_Gain_n * helicopterD3_P.Gain1_Gain *
-                     helicopterD3_P.K_ed) + helicopterD3_P.Vs_ff;
+  rtb_Backgain = ((helicopterD3_P.K_ep * rtb_Derivative +
+                   helicopterD3_X.Integrator_CSTATE) - helicopterD3_P.K_ed *
+                  helicopterD3_B.Gain1[5]) + helicopterD3_P.Vs_ff;
 
-  /* Clock: '<S3>/Clock' */
-  rtb_Clock = helicopterD3_M->Timing.t[0];
+  /* Sum: '<S1>/Subtract' */
+  rtb_Clock = rtb_Backgain - rtb_Frontgain;
+
+  /* Gain: '<S1>/Front gain' incorporates:
+   *  Sum: '<S1>/Add'
+   */
+  rtb_Frontgain = (rtb_Frontgain + rtb_Backgain) * helicopterD3_P.Frontgain_Gain;
 
   /* If: '<S3>/If' incorporates:
+   *  Clock: '<S3>/Clock'
    *  Gain: '<S3>/K_ei'
    *  Inport: '<S7>/In1'
    */
   if (rtmIsMajorTimeStep(helicopterD3_M)) {
-    rtAction = (int8_T)!(rtb_Clock >= 2.0);
+    rtAction = (int8_T)!(helicopterD3_M->Timing.t[0] >= 2.0);
     helicopterD3_DW.If_ActiveSubsystem = rtAction;
   } else {
     rtAction = helicopterD3_DW.If_ActiveSubsystem;
@@ -370,55 +476,85 @@ void helicopterD3_output(void)
     /* Outputs for IfAction SubSystem: '<S3>/If Action Subsystem' incorporates:
      *  ActionPort: '<S7>/Action Port'
      */
-    helicopterD3_B.In1 = helicopterD3_P.K_ei * rtb_Sum_b;
+    helicopterD3_B.In1 = helicopterD3_P.K_ei * rtb_Derivative;
+    if (rtmIsMajorTimeStep(helicopterD3_M)) {
+      srUpdateBC(helicopterD3_DW.IfActionSubsystem_SubsysRanBC);
+    }
 
     /* End of Outputs for SubSystem: '<S3>/If Action Subsystem' */
   }
 
   /* End of If: '<S3>/If' */
-
-  /* Gain: '<S1>/Front gain' incorporates:
-   *  Sum: '<S1>/Add'
-   */
-  rtb_Sum_b = (rtb_Gain1_idx_2 + rtb_Gain1_idx_3) *
-    helicopterD3_P.Frontgain_Gain;
-
-  /* Saturate: '<S4>/Front motor: Saturation' */
-  if (rtb_Sum_b > helicopterD3_P.FrontmotorSaturation_UpperSat) {
-    /* Saturate: '<S4>/Front motor: Saturation' */
-    helicopterD3_B.FrontmotorSaturation =
-      helicopterD3_P.FrontmotorSaturation_UpperSat;
-  } else if (rtb_Sum_b < helicopterD3_P.FrontmotorSaturation_LowerSat) {
-    /* Saturate: '<S4>/Front motor: Saturation' */
-    helicopterD3_B.FrontmotorSaturation =
-      helicopterD3_P.FrontmotorSaturation_LowerSat;
-  } else {
-    /* Saturate: '<S4>/Front motor: Saturation' */
-    helicopterD3_B.FrontmotorSaturation = rtb_Sum_b;
+  if (rtmIsMajorTimeStep(helicopterD3_M)) {
   }
 
-  /* End of Saturate: '<S4>/Front motor: Saturation' */
+  /* Derivative: '<S4>/Derivative' */
+  rtb_Derivative = helicopterD3_M->Timing.t[0];
+  if ((helicopterD3_DW.TimeStampA >= rtb_Derivative) &&
+      (helicopterD3_DW.TimeStampB >= rtb_Derivative)) {
+    rtb_Derivative = 0.0;
+  } else {
+    rtb_Backgain = helicopterD3_DW.TimeStampA;
+    lastU = &helicopterD3_DW.LastUAtTimeA;
+    if (helicopterD3_DW.TimeStampA < helicopterD3_DW.TimeStampB) {
+      if (helicopterD3_DW.TimeStampB < rtb_Derivative) {
+        rtb_Backgain = helicopterD3_DW.TimeStampB;
+        lastU = &helicopterD3_DW.LastUAtTimeB;
+      }
+    } else {
+      if (helicopterD3_DW.TimeStampA >= rtb_Derivative) {
+        rtb_Backgain = helicopterD3_DW.TimeStampB;
+        lastU = &helicopterD3_DW.LastUAtTimeB;
+      }
+    }
 
-  /* Gain: '<S1>/Back gain' incorporates:
-   *  Sum: '<S1>/Subtract'
-   */
-  rtb_Sum_b = (rtb_Gain1_idx_3 - rtb_Gain1_idx_2) * helicopterD3_P.Backgain_Gain;
+    rtb_Derivative = (helicopterD3_B.PitchCounttorad - *lastU) / (rtb_Derivative
+      - rtb_Backgain);
+  }
+
+  /* End of Derivative: '<S4>/Derivative' */
+
+  /* Gain: '<S12>/Gain' */
+  helicopterD3_B.Gain_l = helicopterD3_P.Gain_Gain_a1 * rtb_Derivative;
+  if (rtmIsMajorTimeStep(helicopterD3_M)) {
+  }
+
+  /* Gain: '<S1>/Back gain' */
+  rtb_Clock *= helicopterD3_P.Backgain_Gain;
 
   /* Saturate: '<S4>/Back motor: Saturation' */
-  if (rtb_Sum_b > helicopterD3_P.BackmotorSaturation_UpperSat) {
+  if (rtb_Clock > helicopterD3_P.BackmotorSaturation_UpperSat) {
     /* Saturate: '<S4>/Back motor: Saturation' */
     helicopterD3_B.BackmotorSaturation =
       helicopterD3_P.BackmotorSaturation_UpperSat;
-  } else if (rtb_Sum_b < helicopterD3_P.BackmotorSaturation_LowerSat) {
+  } else if (rtb_Clock < helicopterD3_P.BackmotorSaturation_LowerSat) {
     /* Saturate: '<S4>/Back motor: Saturation' */
     helicopterD3_B.BackmotorSaturation =
       helicopterD3_P.BackmotorSaturation_LowerSat;
   } else {
     /* Saturate: '<S4>/Back motor: Saturation' */
-    helicopterD3_B.BackmotorSaturation = rtb_Sum_b;
+    helicopterD3_B.BackmotorSaturation = rtb_Clock;
   }
 
   /* End of Saturate: '<S4>/Back motor: Saturation' */
+  if (rtmIsMajorTimeStep(helicopterD3_M)) {
+  }
+
+  /* Saturate: '<S4>/Front motor: Saturation' */
+  if (rtb_Frontgain > helicopterD3_P.FrontmotorSaturation_UpperSat) {
+    /* Saturate: '<S4>/Front motor: Saturation' */
+    helicopterD3_B.FrontmotorSaturation =
+      helicopterD3_P.FrontmotorSaturation_UpperSat;
+  } else if (rtb_Frontgain < helicopterD3_P.FrontmotorSaturation_LowerSat) {
+    /* Saturate: '<S4>/Front motor: Saturation' */
+    helicopterD3_B.FrontmotorSaturation =
+      helicopterD3_P.FrontmotorSaturation_LowerSat;
+  } else {
+    /* Saturate: '<S4>/Front motor: Saturation' */
+    helicopterD3_B.FrontmotorSaturation = rtb_Frontgain;
+  }
+
+  /* End of Saturate: '<S4>/Front motor: Saturation' */
   if (rtmIsMajorTimeStep(helicopterD3_M)) {
     /* S-Function (hil_write_analog_block): '<S4>/HIL Write Analog' */
 
@@ -444,6 +580,26 @@ void helicopterD3_output(void)
 /* Model update function */
 void helicopterD3_update(void)
 {
+  real_T *lastU;
+
+  /* Update for Derivative: '<S4>/Derivative' */
+  if (helicopterD3_DW.TimeStampA == (rtInf)) {
+    helicopterD3_DW.TimeStampA = helicopterD3_M->Timing.t[0];
+    lastU = &helicopterD3_DW.LastUAtTimeA;
+  } else if (helicopterD3_DW.TimeStampB == (rtInf)) {
+    helicopterD3_DW.TimeStampB = helicopterD3_M->Timing.t[0];
+    lastU = &helicopterD3_DW.LastUAtTimeB;
+  } else if (helicopterD3_DW.TimeStampA < helicopterD3_DW.TimeStampB) {
+    helicopterD3_DW.TimeStampA = helicopterD3_M->Timing.t[0];
+    lastU = &helicopterD3_DW.LastUAtTimeA;
+  } else {
+    helicopterD3_DW.TimeStampB = helicopterD3_M->Timing.t[0];
+    lastU = &helicopterD3_DW.LastUAtTimeB;
+  }
+
+  *lastU = helicopterD3_B.PitchCounttorad;
+
+  /* End of Update for Derivative: '<S4>/Derivative' */
   if (rtmIsMajorTimeStep(helicopterD3_M)) {
     rt_ertODEUpdateContinuousStates(&helicopterD3_M->solverInfo);
   }
@@ -910,6 +1066,26 @@ void helicopterD3_initialize(void)
     }
   }
 
+  /* Start for ToFile: '<Root>/       ' */
+  {
+    FILE *fp = (NULL);
+    char fileName[509] = "x_enc.mat";
+    if ((fp = fopen(fileName, "wb")) == (NULL)) {
+      rtmSetErrorStatus(helicopterD3_M, "Error creating .mat file x_enc.mat");
+      return;
+    }
+
+    if (rt_WriteMat4FileHeader(fp, 6 + 1, 0, "ans")) {
+      rtmSetErrorStatus(helicopterD3_M,
+                        "Error writing mat file header to file x_enc.mat");
+      return;
+    }
+
+    helicopterD3_DW._IWORK.Count = 0;
+    helicopterD3_DW._IWORK.Decimation = -1;
+    helicopterD3_DW._PWORK.FilePtr = fp;
+  }
+
   /* Start for FromWorkspace: '<S6>/From Workspace1' */
   {
     static real_T pTimeValues0[] = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75,
@@ -932,148 +1108,150 @@ void helicopterD3_initialize(void)
       3.1415926535897931, 3.1415926535897931, 3.1415926535897931,
       3.1415926535897931, 3.1415926535897931, 3.1415926535897931,
       3.1415926535897931, 3.1415926535897931, 3.1415926535897931,
-      3.1415926535897931, 3.1415926535897931, 3.1415926535897931, 1.0, 1.0, 1.0,
-      1.0, 0.99624948777273281, 0.98462289986820439, 0.96171664644017,
-      0.92503476160138376, 0.87286126880436465, 0.80406362352777727,
-      0.71991899095499279, 0.62478969055999412, 0.52424581577580931,
-      0.42384006967950483, 0.32837688219139288, 0.24154455420988497,
-      0.1658029081058528, 0.10244015389467137, 0.051731543770989666,
-      0.013148888060868365, -0.014415867551388418, -0.032438023848012476,
-      -0.042573966030402595, -0.04650953273805418, -0.04584546025205008,
-      -0.042018559226891496, -0.036254772285998618, -0.029548861500353282,
-      -0.022664929607310466, -0.016152055523552613, -0.010369821202292785,
-      -0.0055192549212799511, -0.0016755818895558376, 0.0011799442263644364,
-      0.0031310267149872338, 0.0043012971051926314, 0.0048338363566169228,
-      0.00487533711072955, 0.0045646532839406541, 0.0040252542599969682,
-      0.0033609707859389173, 0.002654369243940326, 0.00196710095888788,
-      0.0013416255864570417, 0.00080378658254888166, 0.00036580914190381615,
-      2.9386511414215067E-5, -0.00021138832070891991, -0.00036740695195385778,
-      -0.00045233812499441119, -0.00048086521583428883, -0.0004673633995810179,
-      -0.00042498186183700812, -0.00036507801595665621, -0.00029694135362292294,
-      -0.0002277423158682107, -0.00016264452019823473, -0.00010502510246540784,
-      -5.6756369497791905E-5, -1.8511232918462915E-5, 9.9358880248545789E-6,
-      2.943247692326238E-5, 4.1207983054172205E-5, 4.6676726166025442E-5,
-      4.7285033020050417E-5, 4.4400490694121344E-5, 3.9238861933794228E-5,
-      3.2822859310655989E-5, 2.5966424636413416E-5, 1.9278214997059527E-5,
-      1.3178477467050045E-5, 7.9242437888486486E-6, 3.6386635976600292E-6,
-      3.4121784137624212E-7, -2.0235622311464239E-6, -3.5604513304173288E-6,
-      -4.4018681428506693E-6, -4.6905594216691506E-6, -4.5665840898878665E-6,
-      -4.1582632529193829E-6, -3.5765810122651725E-6, -2.9124286228253397E-6,
-      -2.2360615759506671E-6, -1.5981670679323468E-6, -1.0320012898711727E-6,
-      -5.561377709978107E-7, -1.7745809431377523E-7, 1.0589408415323507E-7,
-      3.0179182808680634E-7, 4.2176025980397336E-7, 4.79032388164643E-7,
-      4.8704268879905426E-7, 4.5834154486276436E-7, 4.0389067888795276E-7,
-      3.3268610111072255E-7, 2.516488483496856E-7, 1.6572284731265946E-7,
-      7.8121676197768143E-8, -9.3299109695644829E-9, -9.5809568112605636E-8,
-      -1.8111268635489991E-7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      3.1415926535897931, 3.1415926535897931, 3.1415926535897931,
+      3.1415926535897931, 3.1415926535897931, 3.1415926535897931,
+      3.1415926535897931, 3.1378421413626678, 3.1262155534585028,
+      3.1033093000313436, 3.0666274151941342, 3.014453922399591,
+      2.9456562771266168, 2.8595077633076316, 2.7555515879860746,
+      2.633505110520368, 2.4931956060744582, 2.3345185761233522,
+      2.1574113215536808, 1.961836484148447, 1.7511937945163805,
+      1.5333134234609245, 1.3157801403603693, 1.104568564863847,
+      0.90395638584884663, 0.71684173863678669, 0.54511857119567664,
+      0.38999354035523631, 0.25222104936729306, 0.13226592811700444,
+      0.030411282493045439, -0.053172082069362504, -0.11838191912621635,
+      -0.16515742623854598, -0.19346265029411641, -0.20327643561504646,
+      -0.19458638682461735, -0.16738526920269345, -0.12783115851139037,
+      -0.084038865368926907, -0.043071863568099146, -0.010245243815160699,
+      0.01073109574127471, 0.017384085624029041, 0.0128514945645418,
+      0.004098001486342622, -0.0021647118775279129, -0.0021173977919048078,
+      0.00037271033536781154, 0.00023582456581670727, -4.9577270425100854E-5,
+      -1.2049043602948408E-6, 1.6523869218854808E-6, -4.2121232705397079E-7,
+      -7.8062622063483E-8, 1.8240026045824262E-8, 3.2050121149272856E-8,
+      -6.2110995108397706E-9, -7.4806830501935834E-9, 5.7103469477556136E-10,
+      3.0209932370333447E-9, -1.8028117641198509E-9, 5.7547837785127923E-10,
+      1.5564431726301007E-9, -3.8621304082060762E-9, 4.0069162961624491E-9,
+      -2.2107063736839852E-9, 5.9836617848070508E-10, -5.1324116683677793E-11,
+      7.082784036921579E-13, -5.71989451748791E-12, -3.0799430251715507E-11,
+      4.1537797825116358E-11, 1.629870463732711E-10, -6.0295678406247277E-10,
+      8.1089595760637284E-10, -4.1079989114019738E-10, -1.9135612015943444E-10,
+      4.0070448664030272E-10, -2.3920033970745215E-10, 5.7076126941088241E-11,
+      8.35085555106497E-12, -9.1955746657951342E-12, -3.376449034802859E-13,
+      1.6275339245042879E-12, 4.2410672706714967E-13, -3.6917062738054713E-13,
+      -2.365536540759749E-13, -2.8061449323371904E-14, 3.1102652151361812E-14,
+      7.1932508434148973E-14, 9.8998034791107841E-14, 8.4743101588812839E-14,
+      5.3574726567190347E-14, 3.3605286624913279E-14, 2.6892180257729174E-14,
+      2.4761791819208128E-14, 2.3326016984052386E-14, 2.2599812641934282E-14,
+      1.3802268164529944E-14, -3.3958789236954168E-14, 7.8251603351949917E-14,
+      -8.3236800246551057E-14, -3.6083977585485106E-15, 0.0, 0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, -0.015002048909069103, -0.046506351618113825,
-      -0.091625013712137715, -0.14672753935514468, -0.20869397118807662,
-      -0.27519058110634942, -0.336578530291138, -0.38051720157999441,
-      -0.4021754991367395, -0.40162298438521793, -0.38185274995244778,
-      -0.34732931192603156, -0.30296658441612867, -0.25345101684472565,
-      -0.20283444049472682, -0.15433062284048521, -0.11025902244902713,
-      -0.072088625186496225, -0.040543768729560482, -0.015742266830606335,
-      0.0026562899440163903, 0.015307604100634331, 0.02305514776357151,
-      0.026823643142581358, 0.027535727572171258, 0.026051496335031409,
-      0.023128937285039314, 0.019402265124051334, 0.015374692126896454,
-      0.011422104463681096, 0.0078043299544911906, 0.0046810815608215872,
-      0.0021301570056971668, 0.00016600301645050807, -0.001242735307155584,
-      -0.0021575960957747396, -0.0026571338962322042, -0.0028264061679943667,
-      -0.0027490731402097829, -0.0025019014897233538, -0.0021513560156326402,
-      -0.0017519097625802618, -0.0013456905219584043, -0.00096309932849254,
-      -0.00062407452497975147, -0.00033972469216221357, -0.0001141083633595106,
-      5.4007265013083784E-5, 0.00016952615097603902, 0.00023961538352140744,
-      0.00027254664933493307, 0.00027679615101884906, 0.00026039118267990376,
-      0.00023047767093130756, 0.00019307493187046372, 0.00015298054631731595,
-      0.00011378848377326998, 7.79863555936312E-5, 4.7102024523639322E-5,
-      2.1874972447412943E-5, 2.4332274160999048E-6, -1.1538169303716288E-5,
-      -2.0646515041308463E-5, -2.5664010492552946E-5, -2.7425738696970291E-5,
-      -2.6752838557415553E-5, -2.4398950120037933E-5, -2.1016934712805589E-5,
-      -1.7142320764754476E-5, -1.3189783025135148E-5, -9.459120290090665E-6,
-      -6.14755639708362E-6, -3.365667249733361E-6, -1.1547651152739268E-6,
-      4.9590132712513655E-7, 1.6332833478739342E-6, 2.3267289626168415E-6,
-      2.6566095577593324E-6, 2.7054681874986903E-6, 2.55157803207328E-6,
-      2.2646631122446965E-6, 1.9034540754934482E-6, 1.5147187067361421E-6,
-      1.133408713868041E-6, 7.8359097573428522E-7, 4.798737268686679E-7,
-      2.2908851344267866E-7, 3.20412025376448E-8, -1.1480457574515942E-7,
-      -2.178034638992463E-7, -2.84818311108921E-7, -3.2414901104414774E-7,
-      -3.4370400414810456E-7, -3.5040468445956525E-7, -3.4980634866933048E-7,
-      -3.4591862857216463E-7, -3.412124729691771E-7, -3.3680863093985967E-7, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.015002048908273845,
+      -0.04650635161641635, -0.091625013708524813, -0.14672753934887803,
+      -0.20869397117813243, -0.27519058109172745, -0.34459405527602055,
+      -0.41582470128606025, -0.488185909862881, -0.56123801778352811,
+      -0.63470811980436292, -0.70842901827868265, -0.78229934962091974,
+      -0.84257075852826113, -0.87152148422180387, -0.8701331324021786,
+      -0.84484630198607447, -0.80244871605998647, -0.74845858884828043,
+      -0.68689266976439367, -0.62050012336171945, -0.55108996395172616,
+      -0.47982048500115815, -0.407418582495855, -0.33433345824977095,
+      -0.26083934822738652, -0.18710202844938403, -0.11322089622226482,
+      -0.039255141283677242, 0.034760195161663968, 0.10880447048774894,
+      0.15821644276518326, 0.17516917256978687, 0.16386800720325673,
+      0.13130647901172149, 0.0839053582257576, 0.026611959530994808,
+      -0.018130364237960592, -0.03501397231276026, -0.025050853455406797,
+      0.00018925634245236289, 0.0099604325089778165, -0.00054754307818317613,
+      -0.0011416073449708616, 0.0001934894642531651, 1.1429165131699137E-5,
+      -8.2943969921524E-6, 1.3725988179081653E-6, 3.8521059108745061E-7,
+      5.5240380401835228E-8, -1.5304488201768409E-7, -5.0783341787281753E-9,
+      3.220687088416753E-8, 9.7998342489019932E-9, -1.9295220013141682E-8,
+      9.5131605760556132E-9, 3.9238591307846819E-9, -2.16742943327547E-8,
+      3.1476186828797357E-8, -2.4870490677150697E-8, 1.1236290203662807E-8,
+      -2.5987611826348586E-9, 2.081295797611858E-10, -2.571269109746866E-11,
+      -1.0031814269347347E-10, 2.8934891171503538E-10, 4.8579699040857733E-10,
+      -3.063775323644656E-9, 5.6554109735811105E-9, -4.8867834015608946E-9,
+      8.77775083967084E-10, 2.3682424319571651E-9, -2.5596193053516254E-9,
+      1.1851058662903616E-9, -1.9490108532908558E-10, -7.01857211421512E-11,
+      3.5431719218015565E-11, 7.8607152872232263E-12, -4.8137090064724091E-12,
+      -3.1731093375291589E-12, 5.3046801905702439E-13, 8.3396855638142075E-13,
+      2.366565105474255E-13, 1.6331958573875592E-13, 1.0826214171895873E-13,
+      -5.7019696202483426E-14, -1.2467350509198568E-13, -7.987774374322773E-14,
+      -2.6852422590638938E-14, -8.5215434898364685E-15, -5.7431021367222271E-15,
+      -2.9047971323620912E-15, -3.5190153149438336E-14, -1.9104424778129737E-13,
+      4.488415734684511E-13, -6.4595361982639418E-13, 3.1851360727127375E-13,
+      2.2477601811329641E-10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.10602875205866502,
-      0.22266037932318383, 0.3188814718164108, 0.38944360631143271,
-      0.43795507377675658, 0.469972642303804, 0.43386657935563477,
-      0.31054174747137364, 0.1530725753246156, -0.0039049632455309125,
-      -0.13972846625945107, -0.24399847466850133, -0.31353881488478452,
-      -0.34995712045026289, -0.35773862999657391, -0.34280645844654012,
-      -0.31148123959982038, -0.26977378969099153, -0.22294699772484211,
-      -0.17528754315263168, -0.13003397244719789, -0.0894146566284762,
-      -0.054756679642897488, -0.026634286062983348, -0.0050327407867571949,
-      0.010489979521763892, 0.020655531172231512, 0.026338695531291423,
-      0.0284653477203064, 0.027935380018660916, 0.025569048518922832,
-      0.022073926805425526, 0.018028960498344349, 0.013881890240016959,
-      0.0099564244414018788, 0.0064658866474065491, 0.0035305423885676479,
-      0.0011963517678194036, -0.00054656030509014908, -0.0017469148250351951,
-      -0.0024775215294078334, -0.0028231335587665107, -0.0028710024481464202,
-      -0.0027040084349473359, -0.0023960978297744573, -0.0020096760185405182,
-      -0.001594570043851995, -0.0011881770540639325, -0.000816443366629116,
-      -0.00049536392691251763, -0.00023274560954167356, -3.0033854904965018E-5,
-      0.00011594405079518033, 0.00021141727638829266, 0.00026434827472165967,
-      0.00028337180412696394, 0.0002769945297166343, 0.00025303576832380603,
-      0.00021827865657353396, 0.00017829516929179778, 0.00013740682864127329,
-      9.8744496028535522E-5, 6.43743089983051E-5, 3.546174156499049E-5,
-      1.245122211745997E-5, -4.7558011765369557E-6, -1.6636384457147102E-5,
-      -2.3902793214625184E-5, -2.7384291566345809E-5, -2.7935027164138759E-5,
-      -2.63668993710775E-5, -2.3404868819132396E-5, -1.9661330011966349E-5,
-      -1.5625811878083873E-5, -1.166627997362113E-5, -8.0385817166073181E-6,
-      -4.9010087486145437E-6, -2.3314700440257852E-6, -3.4531412129723549E-7,
-      1.0876368577994455E-6, 2.0278050875122133E-6, 2.5528875311486843E-6,
-      2.7474331329990775E-6, 2.6949534122078234E-6, 2.4723781836266667E-6,
-      2.1465575325008146E-6, 1.7724541221397772E-6, 1.3926551509779728E-6,
-      1.0378498918051093E-6, 7.2795681882453778E-7, 4.7363536082034585E-7,
-      2.77974381512891E-7, 1.3820723865354267E-7, 4.735786551801624E-8,
-      -4.2287922052963722E-9, -2.7476904085332876E-8, -3.3261293386210866E-8,
-      -3.1124656296732667E-8, -2.98985329827417E-8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.10602875205458229, 0.22266037931401239, 0.31888147180196358,
+      0.38944360629167818, 0.43795507375131382, 0.46997264227186109,
+      0.49051724873530078, 0.5034310013639135, 0.51142138579451413,
+      0.51630439848889764, 0.51925862114583576, 0.52103115469381589,
+      0.52208728913294078, 0.42597529910737031, 0.20461267224783186,
+      -0.0098123404172798523, -0.17871765975380366, -0.29964994470350642,
+      -0.38158159905070854, -0.43512440263111196, -0.46923716111974778,
+      -0.4905644973580669, -0.50370545775289211, -0.51170899494020516,
+      -0.5165377452667016, -0.5194283005308864, -0.52114721419888643,
+      -0.52216362566322272, -0.52276170666844513, -0.52311212981969613,
+      -0.52331665877778788, -0.34922494847887847, -0.11981541961786601,
+      0.079872320633225025, 0.23013244525417464, 0.33501301812755979,
+      0.4049278602950328, 0.31622165626721677, 0.11932689363089088,
+      -0.070415518936986332, -0.17838745626799951, -0.069058941306169075,
+      0.07426635821004457, 0.004198619350851307, -0.00943595434296185,
+      0.0012867326611433194, 0.00013939860420597583, -6.8322634343309652E-5,
+      6.9784828938823651E-6, 2.3321034228196424E-6, 1.4720806922330354E-6,
+      -1.0457710495348493E-6, -2.6351758952714022E-7, 1.5836437805560877E-7,
+      2.056327315091977E-7, -2.0360663077756413E-7, 3.9503048054889689E-8,
+      1.8091797271413412E-7, -3.7564730115402512E-7, 3.9823679698347547E-7,
+      -2.5518893709275403E-7, 9.7780859631413364E-8, -1.9838031550811763E-8,
+      1.6527081925232778E-9, 5.2728321708883641E-10, -2.7540176805729288E-9,
+      -1.3884196015112593E-9, 2.5087021793268605E-8, -6.1623878333527671E-8,
+      7.4508203828926867E-8, -4.0741697349133688E-8, -1.0534053629385198E-8,
+      3.482824495470993E-8, -2.6466286939808015E-8, 9.75336245101488E-9,
+      -8.8144014309676777E-10, -7.4646333558803235E-10, 1.9486168234550405E-10,
+      8.9578344741880755E-11, -1.1594725179975285E-11, -2.6175173140075003E-11,
+      -2.1446178166684149E-12, 4.2219561180445453E-12, 5.1869619710487314E-13,
+      3.8946623703850491E-13, 1.1685097334179773E-12, 4.7850612361344247E-13,
+      -3.1619151741324458E-13, -3.7436720390360279E-13, -1.2911893776390571E-13,
+      -1.9317880628477724E-14, -1.9761969838327786E-14, 2.2859492077031973E-13,
+      1.1018963519404679E-12, -4.5221604239031876E-12, 7.7379214147299535E-12,
+      -6.8161032373836861E-12, -1.5863799163184922E-9, -2.4411657140177567E-9,
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0, 0.0, 0.42411500823464127, 0.46652650905809445,
-      0.38488436997290759, 0.28224853798008503, 0.1940458698612835,
-      0.12807027410817604, -0.14442425179269028, -0.49329932753705591,
-      -0.6298766885870416, -0.62791015428059371, -0.54329401205568573,
-      -0.41708003363620427, -0.27816136086513454, -0.14567322226191373,
-      -0.031126038185243236, 0.05972868620013632, 0.12530087538688089,
-      0.16682979963531785, 0.18730716786460017, 0.19063781828884438,
-      0.18101428282173757, 0.16247726327488896, 0.13863190794231703,
-      0.11248957431965854, 0.086406181104906485, 0.062090881234085807,
-      0.040662206601871288, 0.02273265743624089, 0.008506608756060817,
-      -0.0021198708065813983, -0.0094653259989522457, -0.013980486853988838,
-      -0.016179865228324403, -0.016588281033309511, -0.015701863194459754,
-      -0.013962151175981702, -0.011741377035355804, -0.0093367624829929566,
-      -0.0069716482916380162, -0.0048014180797802926, -0.0029224268174906859,
-      -0.0013824481174348625, -0.0001914755575200034, 0.0006679760527962624,
-      0.0012316424206915632, 0.0015456872449356232, 0.0016604238987541398,
-      0.0016255719591519353, 0.0014869347497390229, 0.0012843177588667556,
-      0.0010504732694829257, 0.00081084701854721808, 0.00058391162280028281,
-      0.00038189290237259266, 0.00021172399333338707, 7.6094117621178443E-5,
-      -2.5509097640979767E-5, -9.5835045571574759E-5, -0.00013902844700114912,
-      -0.00015993394912683397, -0.00016355336260187117, -0.0001546493304508702,
-      -0.00013748074812100226, -0.000115650269733334, -9.2042077789910822E-5,
-      -6.8828093176364559E-5, -4.75223331221675E-5, -2.9065635029621597E-5,
-      -1.3925993406984626E-5, -2.2029423910914078E-6, 6.2725111725702471E-6,
-      1.1848122208000441E-5, 1.4974155228969372E-5, 1.6142072535482628E-5,
-      1.5838127618128406E-5, 1.4510793028250691E-5, 1.2550291871817871E-5,
-      1.0278154818492582E-5, 7.94462369097057E-6, 5.7318039162250974E-6,
-      3.7606729186546252E-6, 2.1003297743130217E-6, 7.7818240679068052E-7,
-      -2.0991888365347323E-7, -8.9030091497312482E-7, -1.3032826048036215E-6,
-      -1.4964136420683572E-6, -1.5191958853688407E-6, -1.4192210373943394E-6,
-      -1.2395722931780655E-6, -1.0172858334984447E-6, -7.8264391865911074E-7,
-      -5.5906857283358841E-7, -3.6339749363734692E-7, -2.0634663223946686E-7,
-      -9.2992448615903385E-8, -2.3137557824161654E-8, 8.5465474975329421E-9,
-      4.9044925866440088E-9, 2.5701434847483247E-8, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 } ;
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.42411500821839504,
+      0.46652650903756443, 0.38488436995186237, 0.28224853795882826,
+      0.19404586983848868, 0.1280702740821559, 0.082178425853774689,
+      0.0516550105144487, 0.031961537722395246, 0.019532050777538505,
+      0.01181689062775166, 0.0070901341919200793, 0.0042245377565002388,
+      -0.38444796010228077, -0.88545050743813669, -0.85770005066039745,
+      -0.675621277346057, -0.48372913979883131, -0.32772661738883724,
+      -0.21417121432164551, -0.13645103395453598, -0.0853093449532918,
+      -0.052563841579299719, -0.032014148749251944, -0.019315001306008352,
+      -0.011562221056731837, -0.0068756546719773905, -0.0040656458573454816,
+      -0.0023923240208495382, -0.0014016926049905888, -0.00081811583239960433,
+      0.69636684119564507, 0.91763811544401419, 0.798750961004429,
+      0.60104049848379815, 0.419522291493583, 0.27965936866990015,
+      -0.3548248161112561, -0.78757905054536947, -0.7589696502714951,
+      -0.43188774932407864, 0.43731405984734628, 0.5733011980648367,
+      -0.28027095543675529, -0.054538294775258747, 0.042890748016425589,
+      -0.0045893362277597619, -0.00083088495419720654, 0.00030120446894854082,
+      -1.8585517884009296E-5, -3.4400909225794254E-6, -1.0071406967075683E-5,
+      3.1290138399060982E-6, 1.6875278700128427E-6, 1.8907341360973058E-7,
+      -1.636957448960735E-6, 9.7243871538434622E-7, 5.6565969881500087E-7,
+      -2.2262610957500555E-6, 3.0955363922757509E-6, -2.6137029358947004E-6,
+      1.4118791863514271E-6, -4.7047556444937053E-7, 8.5962959240286767E-8,
+      -4.5016996706861946E-9, -1.3125203517066561E-8, 5.4623921478423081E-9,
+      1.0590176561456482E-7, -3.4684360016340529E-7, 5.44528328404413E-7,
+      -4.6099960451344184E-7, 1.2083057494408105E-7, 1.8144919444691712E-7,
+      -2.4517812789495845E-7, 1.4487859735612426E-7, -4.2539210093492144E-8,
+      5.3990713234110734E-10, 3.7653002044713983E-9, -4.2113359075071665E-10,
+      -4.0469210459556539E-10, -5.83214383084874E-11, 9.6121769611558635E-11,
+      2.5466550891503233E-11, -1.4813280236653661E-11, -5.1679279085871665E-13,
+      3.1158959727386023E-12, -2.760026378137109E-12, -3.1790921563326282E-12,
+      -2.3259163135615645E-13, 9.8077045822643713E-13, 4.39659844856015E-13,
+      -1.6398331044724212E-15, 9.9296492546319515E-13, 3.4936769209178871E-12,
+      -2.2496255980164752E-11, 4.9040553857787648E-11, -5.8216154529481318E-11,
+      -6.3182552831180256E-9, -3.4191435644938257E-9, 9.4305337576859617E-10,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0 } ;
 
     helicopterD3_DW.FromWorkspace1_PWORK.TimePtr = (void *) pTimeValues0;
     helicopterD3_DW.FromWorkspace1_PWORK.DataPtr = (void *) pDataValues0;
@@ -1097,46 +1275,66 @@ void helicopterD3_initialize(void)
       33.5, 33.75, 34.0, 34.25, 34.5, 34.75, 35.0 } ;
 
     static real_T pDataValues0[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.52359877559832246,
-      0.52359877559830881, 0.52359877559829038, 0.52359877559824708,
-      0.52359877559824464, 0.52359877559792645, 0.2438423834020701,
-      -0.12120871863172261, -0.28285781056205361, -0.38689341971613644,
-      -0.44014100075886825, -0.45174525019692952, -0.43164619156996065,
-      -0.38950105019368658, -0.33398167409349139, -0.27237528092105395,
-      -0.21042010312390041, -0.15231298672230842, -0.10083409404294863,
-      -0.05754280018187774, -0.023008107610211215, 0.0029542284433105026,
-      0.021057609793328491, 0.032346310686863555, 0.03803001624961988,
-      0.039353693101947362, 0.037501973384183152, 0.033534963195903322,
-      0.028351016372769822, 0.022671372466861794, 0.017041472512535516,
-      0.011844078470396813, 0.0073198922930886035, 0.0035920817307624198,
-      0.0006918801389259599, -0.0014168318050888917, -0.0028153803953357981,
-      -0.0036114278951333567, -0.003923744084689873, -0.0038706275539291957,
-      -0.0035617269835006571, -0.003092847461684145, -0.0025432384995021096,
-      -0.0019748328074721266, -0.0014329224291192988, -0.00094780719684051107,
-      -0.00053701736772426845, -0.00020778766140894245, 4.0463973214666105E-5,
-      0.00021382823469273671, 0.00032187946497119757, 0.00037599371703689322,
-      0.000388028366934301, 0.00036935100940682641, 0.00033018442498788936,
-      0.0002792218668671298, 0.00022346122607574959, 0.00016820620436452938,
-      0.00011718595879817162, 7.27504542167301E-5, 3.6105856957124871E-5,
-      7.5618431303325906E-6, -1.3229980094342508E-5, -2.7060682886492771E-5,
-      -3.4980074725909915E-5, -3.8147993493553578E-5, -3.7721029493065217E-5,
-      -3.4772346506728447E-5, -3.0240618906662853E-5, -2.4903216733762612E-5,
-      -1.9368482416237676E-5, -1.4082099891621347E-5, -9.3430191141496977E-6,
-      -5.3250453468933756E-6, -2.10093450014881E-6, 3.3342301863914514E-7,
-      2.0364515931348137E-6, 3.101079556699915E-6, 3.6382606454221644E-6,
-      3.7640133476735116E-6, 3.589861838237951E-6, 3.2163559722242496E-6,
-      2.729224136355235E-6, 2.1976565139913973E-6, 1.6742121130564058E-6,
-      1.195876236037563E-6, 7.8585302198952434E-7, 4.5574948270843407E-7,
-      2.0788443333419337E-7, 3.7531461605233574E-8, -6.5024926776402481E-8,
-      -1.1267939625803081E-7, -1.1995004634002271E-7, -1.0164368668963419E-7,
-      -7.167780069483598E-8, -4.19727325118302E-8, -2.1313128262256953E-8,
-      -1.4069121312410005E-8, -2.8261492590608839E-8, 0.0, 0.0, 0.0, 0.0, 0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5235987755782654,
+      0.523598775574922, 0.52359877557069889, 0.52359877556531986,
+      0.52359877555827794, 0.52359877554887369, 0.5235987755359558,
+      0.52359877551763889, 0.52359877548955736, 0.52359877544453071,
+      0.5235987753624135, 0.52359877519154907, 0.52359877464868954,
+      0.045882495585259253, -0.52359877435830138, -0.52359877486371076,
+      -0.52359877501144925, -0.52359877506447006, -0.5235987750735035,
+      -0.52359877505261809, -0.5235987750042489, -0.52359877492473228,
+      -0.52359877480367034, -0.52359877463129989, -0.52359877433447211,
+      -0.5235987738613862, -0.52359877312638547, -0.523598770148235,
+      -0.52359876905701974, -0.52359876171631914, -0.52359867774483237,
+      0.33670102175917105, 0.52359868853635028, 0.52359869282980342,
+      0.52359865739860745, 0.5235985448865369, 0.52359804960052136,
+      -0.13756815838879227, -0.52358642233982955, -0.523545930420378,
+      -0.32016790179741889, 0.52279785733432227, 0.4754024104975596,
+      -0.48585039222374776, 0.041536482615493253, 0.063883282923630325,
+      -0.020396955613830037, 0.00082753348655140169, 0.00061383436268502845,
+      -0.00012845345505785311, 5.0259654443829405E-6, -9.6770297558501639E-6,
+      6.5784443177285823E-6, 6.512986862050596E-7, -2.3843039620441431E-7,
+      -1.8859131408754948E-6, 1.6082678676587747E-6, 3.7468451397071334E-7,
+      -2.7788019713037571E-6, 4.2774148886204344E-6, -3.9846060359005619E-6,
+      2.4639768956280506E-6, -1.010329039652369E-6, 2.6199137270754846E-7,
+      -3.6008396486764127E-8, -1.3995481440431945E-8, 8.89137274917573E-9,
+      1.2731453347125665E-7, -4.4266468712805818E-7, 7.4016441486968176E-7,
+      -6.9798491197925472E-7, 2.805952845630344E-7, 1.6835229887934844E-7,
+      -3.3562423562560895E-7, 2.4395961550904843E-7, -9.6870076959909568E-8,
+      1.5671668740502298E-8, 3.7004234121340573E-9, -1.731233267854293E-9,
+      -2.5276636339555125E-10, 6.7538530323929535E-11, 1.142742567239452E-10,
+      -6.6018301936310309E-12, -2.3576696150939824E-11, 5.4127813342574882E-12,
+      4.429234756742062E-12, -3.4026115258711798E-12, -2.4155122346769531E-12,
+      5.8386628865036982E-13, 9.2337248958074269E-13, 4.7406523151494184E-14,
+      -1.8551826741486366E-13, 1.2068124277675452E-12, 4.1708858589117881E-12,
+      -2.7975954886017007E-11, 6.4423133494528884E-11, -8.2448381455435538E-11,
+      -7.7853898883262218E-9, -3.4479494814831924E-9, 0.0, 0.0, 0.0, 0.0, 0.0,
       0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
       0.0, 0.0 } ;
 
     helicopterD3_DW.FromWorkspace_PWORK.TimePtr = (void *) pTimeValues0;
     helicopterD3_DW.FromWorkspace_PWORK.DataPtr = (void *) pDataValues0;
     helicopterD3_DW.FromWorkspace_IWORK.PrevIndex = 0;
+  }
+
+  /* Start for ToFile: '<Root>/            ' */
+  {
+    FILE *fp = (NULL);
+    char fileName[509] = "u_vec.mat";
+    if ((fp = fopen(fileName, "wb")) == (NULL)) {
+      rtmSetErrorStatus(helicopterD3_M, "Error creating .mat file u_vec.mat");
+      return;
+    }
+
+    if (rt_WriteMat4FileHeader(fp, 1 + 1, 0, "ans")) {
+      rtmSetErrorStatus(helicopterD3_M,
+                        "Error writing mat file header to file u_vec.mat");
+      return;
+    }
+
+    helicopterD3_DW._IWORK_f.Count = 0;
+    helicopterD3_DW._IWORK_f.Decimation = -1;
+    helicopterD3_DW._PWORK_f.FilePtr = fp;
   }
 
   /* Start for If: '<S3>/If' */
@@ -1153,6 +1351,10 @@ void helicopterD3_initialize(void)
 
   /* InitializeConditions for Integrator: '<S3>/Integrator' */
   helicopterD3_X.Integrator_CSTATE = helicopterD3_P.Integrator_IC;
+
+  /* InitializeConditions for Derivative: '<S4>/Derivative' */
+  helicopterD3_DW.TimeStampA = (rtInf);
+  helicopterD3_DW.TimeStampB = (rtInf);
 }
 
 /* Model terminate function */
@@ -1251,6 +1453,66 @@ void helicopterD3_terminate(void)
     hil_monitor_delete_all(helicopterD3_DW.HILInitialize_Card);
     hil_close(helicopterD3_DW.HILInitialize_Card);
     helicopterD3_DW.HILInitialize_Card = NULL;
+  }
+
+  /* Terminate for ToFile: '<Root>/       ' */
+  {
+    FILE *fp = (FILE *) helicopterD3_DW._PWORK.FilePtr;
+    if (fp != (NULL)) {
+      char fileName[509] = "x_enc.mat";
+      if (fclose(fp) == EOF) {
+        rtmSetErrorStatus(helicopterD3_M, "Error closing MAT-file x_enc.mat");
+        return;
+      }
+
+      if ((fp = fopen(fileName, "r+b")) == (NULL)) {
+        rtmSetErrorStatus(helicopterD3_M, "Error reopening MAT-file x_enc.mat");
+        return;
+      }
+
+      if (rt_WriteMat4FileHeader(fp, 6 + 1, helicopterD3_DW._IWORK.Count, "ans"))
+      {
+        rtmSetErrorStatus(helicopterD3_M,
+                          "Error writing header for ans to MAT-file x_enc.mat");
+      }
+
+      if (fclose(fp) == EOF) {
+        rtmSetErrorStatus(helicopterD3_M, "Error closing MAT-file x_enc.mat");
+        return;
+      }
+
+      helicopterD3_DW._PWORK.FilePtr = (NULL);
+    }
+  }
+
+  /* Terminate for ToFile: '<Root>/            ' */
+  {
+    FILE *fp = (FILE *) helicopterD3_DW._PWORK_f.FilePtr;
+    if (fp != (NULL)) {
+      char fileName[509] = "u_vec.mat";
+      if (fclose(fp) == EOF) {
+        rtmSetErrorStatus(helicopterD3_M, "Error closing MAT-file u_vec.mat");
+        return;
+      }
+
+      if ((fp = fopen(fileName, "r+b")) == (NULL)) {
+        rtmSetErrorStatus(helicopterD3_M, "Error reopening MAT-file u_vec.mat");
+        return;
+      }
+
+      if (rt_WriteMat4FileHeader(fp, 1 + 1, helicopterD3_DW._IWORK_f.Count,
+           "ans")) {
+        rtmSetErrorStatus(helicopterD3_M,
+                          "Error writing header for ans to MAT-file u_vec.mat");
+      }
+
+      if (fclose(fp) == EOF) {
+        rtmSetErrorStatus(helicopterD3_M, "Error closing MAT-file u_vec.mat");
+        return;
+      }
+
+      helicopterD3_DW._PWORK_f.FilePtr = (NULL);
+    }
   }
 }
 
@@ -1390,9 +1652,31 @@ RT_MODEL_helicopterD3_T *helicopterD3(void)
     helicopterD3_M->Timing.sampleHits = (&mdlSampleHits[0]);
   }
 
-  rtmSetTFinal(helicopterD3_M, -1);
+  rtmSetTFinal(helicopterD3_M, 25.0);
   helicopterD3_M->Timing.stepSize0 = 0.002;
   helicopterD3_M->Timing.stepSize1 = 0.002;
+
+  /* External mode info */
+  helicopterD3_M->Sizes.checksums[0] = (1983878486U);
+  helicopterD3_M->Sizes.checksums[1] = (264031718U);
+  helicopterD3_M->Sizes.checksums[2] = (576712663U);
+  helicopterD3_M->Sizes.checksums[3] = (2894294489U);
+
+  {
+    static const sysRanDType rtAlwaysEnabled = SUBSYS_RAN_BC_ENABLE;
+    static RTWExtModeInfo rt_ExtModeInfo;
+    static const sysRanDType *systemRan[2];
+    helicopterD3_M->extModeInfo = (&rt_ExtModeInfo);
+    rteiSetSubSystemActiveVectorAddresses(&rt_ExtModeInfo, systemRan);
+    systemRan[0] = &rtAlwaysEnabled;
+    systemRan[1] = (sysRanDType *)&helicopterD3_DW.IfActionSubsystem_SubsysRanBC;
+    rteiSetModelMappingInfoPtr(helicopterD3_M->extModeInfo,
+      &helicopterD3_M->SpecialInfo.mappingInfo);
+    rteiSetChecksumsPtr(helicopterD3_M->extModeInfo,
+                        helicopterD3_M->Sizes.checksums);
+    rteiSetTPtr(helicopterD3_M->extModeInfo, rtmGetTPtr(helicopterD3_M));
+  }
+
   helicopterD3_M->solverInfoPtr = (&helicopterD3_M->solverInfo);
   helicopterD3_M->Timing.stepSize = (0.002);
   rtsiSetFixedStepSize(&helicopterD3_M->solverInfo, 0.002);
@@ -1402,14 +1686,26 @@ RT_MODEL_helicopterD3_T *helicopterD3(void)
   helicopterD3_M->blockIO = ((void *) &helicopterD3_B);
 
   {
+    int32_T i;
+    for (i = 0; i < 6; i++) {
+      helicopterD3_B.Gain1[i] = 0.0;
+    }
+
     helicopterD3_B.TravelCounttorad = 0.0;
-    helicopterD3_B.Sum4 = 0.0;
-    helicopterD3_B.PitchCounttorad = 0.0;
     helicopterD3_B.Gain = 0.0;
+    helicopterD3_B.Sum4 = 0.0;
+    helicopterD3_B.Gain_d = 0.0;
+    helicopterD3_B.PitchCounttorad = 0.0;
+    helicopterD3_B.Gain_i = 0.0;
+    helicopterD3_B.Gain_b = 0.0;
     helicopterD3_B.ElevationCounttorad = 0.0;
+    helicopterD3_B.Gain_e = 0.0;
     helicopterD3_B.Sum = 0.0;
-    helicopterD3_B.FrontmotorSaturation = 0.0;
+    helicopterD3_B.Gain_dg = 0.0;
+    helicopterD3_B.u = 0.0;
+    helicopterD3_B.Gain_l = 0.0;
     helicopterD3_B.BackmotorSaturation = 0.0;
+    helicopterD3_B.FrontmotorSaturation = 0.0;
     helicopterD3_B.In1 = 0.0;
   }
 
@@ -1485,8 +1781,29 @@ RT_MODEL_helicopterD3_T *helicopterD3(void)
     }
   }
 
+  helicopterD3_DW.TimeStampA = 0.0;
+  helicopterD3_DW.LastUAtTimeA = 0.0;
+  helicopterD3_DW.TimeStampB = 0.0;
+  helicopterD3_DW.LastUAtTimeB = 0.0;
   helicopterD3_DW.HILWriteAnalog_Buffer[0] = 0.0;
   helicopterD3_DW.HILWriteAnalog_Buffer[1] = 0.0;
+
+  /* data type transition information */
+  {
+    static DataTypeTransInfo dtInfo;
+    (void) memset((char_T *) &dtInfo, 0,
+                  sizeof(dtInfo));
+    helicopterD3_M->SpecialInfo.mappingInfo = (&dtInfo);
+    dtInfo.numDataTypes = 16;
+    dtInfo.dataTypeSizes = &rtDataTypeSizes[0];
+    dtInfo.dataTypeNames = &rtDataTypeNames[0];
+
+    /* Block I/O transition table */
+    dtInfo.BTransTable = &rtBTransTable;
+
+    /* Parameters transition table */
+    dtInfo.PTransTable = &rtPTransTable;
+  }
 
   /* Initialize Sizes */
   helicopterD3_M->Sizes.numContStates = (4);/* Number of continuous states */
@@ -1496,9 +1813,9 @@ RT_MODEL_helicopterD3_T *helicopterD3(void)
   helicopterD3_M->Sizes.numU = (0);    /* Number of model inputs */
   helicopterD3_M->Sizes.sysDirFeedThru = (0);/* The model is not direct feedthrough */
   helicopterD3_M->Sizes.numSampTimes = (2);/* Number of sample times */
-  helicopterD3_M->Sizes.numBlocks = (52);/* Number of blocks */
-  helicopterD3_M->Sizes.numBlockIO = (9);/* Number of block outputs */
-  helicopterD3_M->Sizes.numBlockPrms = (148);/* Sum of parameter "widths" */
+  helicopterD3_M->Sizes.numBlocks = (65);/* Number of blocks */
+  helicopterD3_M->Sizes.numBlockIO = (17);/* Number of block outputs */
+  helicopterD3_M->Sizes.numBlockPrms = (149);/* Sum of parameter "widths" */
   return helicopterD3_M;
 }
 

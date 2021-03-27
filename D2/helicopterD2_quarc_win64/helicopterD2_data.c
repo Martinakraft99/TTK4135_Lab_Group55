@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD2".
  *
- * Model version              : 11.6
+ * Model version              : 11.7
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Thu Mar  4 14:02:09 2021
+ * C source code generated on : Sat Mar 27 13:56:59 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -258,6 +258,11 @@ P_helicopterD2_T helicopterD2_P = {
    */
   0.017453292519943295,
 
+  /* Expression: 180/pi
+   * Referenced by: '<S6>/Gain'
+   */
+  57.295779513082323,
+
   /* Expression: 0
    * Referenced by: '<S3>/Integrator'
    */
@@ -288,23 +293,28 @@ P_helicopterD2_T helicopterD2_P = {
    */
   0.5,
 
+  /* Expression: 180/pi
+   * Referenced by: '<S12>/Gain'
+   */
+  57.295779513082323,
+
   /* Expression: 5
-   * Referenced by: '<S4>/Front motor: Saturation'
+   * Referenced by: '<S4>/Back motor: Saturation'
    */
   5.0,
 
   /* Expression: -5
-   * Referenced by: '<S4>/Front motor: Saturation'
+   * Referenced by: '<S4>/Back motor: Saturation'
    */
   -5.0,
 
   /* Expression: 5
-   * Referenced by: '<S4>/Back motor: Saturation'
+   * Referenced by: '<S4>/Front motor: Saturation'
    */
   5.0,
 
   /* Expression: -5
-   * Referenced by: '<S4>/Back motor: Saturation'
+   * Referenced by: '<S4>/Front motor: Saturation'
    */
   -5.0,
 

@@ -72,8 +72,8 @@ c = zeros((mx+mu)*N,1);                                  % Generate c, this is t
 
 %% LQR
 
-LQR_Q = diag([1;1;1;1;1;1]);  %Rank = mx
-LQR_R = diag([1;1]);        %Rank = mu
+LQR_Q = diag([10;5;.1;.1;10;10]);  %Rank = mx
+LQR_R = diag([.1;.1]);        %Rank = mu
 
 K = dlqr(A_d,B_d,LQR_Q,LQR_R);
 %% Generate system matrixes for linear model
@@ -149,42 +149,39 @@ for i = 1 : length(x1)
 %     econ(1+i) = alpha*exp(-beta*(z(1+i*mx)-lambda_t)^2);
 end
 
+plot(econ)
+% 
+% 
+% figure(1)
+% subplot(711)
+% stairs(t,u),grid
+% ylabel('u')
+% hold on
+% subplot(712)
+% plot(t,x1,'m',t,x1,'mo'),grid
+% ylabel('lambda')
+% hold on
+% subplot(713)
+% plot(t,x2,'m',t,x2','mo'),grid
+% ylabel('r')
+% hold on
+% subplot(714)
+% plot(t,x3,'m',t,x3,'mo'),grid
+% ylabel('p')
+% hold on
+% subplot(715)
+% plot(t,x4,'m',t,x4','mo'),grid
+% hold on
+% subplot(716)
+% plot(t,x5,'m',t,x5','mo'),grid
+% ylabel('e')
+% hold on
+% subplot(717)
+% plot(t,x6,'m',t,x6','mo'),grid
+% xlabel('tid (s)'),ylabel('edot')
+% hold on
 
-figure(2)
-subplot(711)
-stairs(t,u),grid
-ylabel('u')
-hold on
-subplot(712)
-plot(t,x1,'m',t,x1,'mo'),grid
-ylabel('lambda')
-hold on
-subplot(713)
-plot(t,x2,'m',t,x2','mo'),grid
-ylabel('r')
-hold on
-subplot(714)
-plot(t,x3,'m',t,x3,'mo'),grid
-ylabel('p')
-hold on
-subplot(715)
-plot(t,x4,'m',t,x4','mo'),grid
-hold on
-subplot(716)
-plot(t,x5,'m',t,x5','mo'),grid
-ylabel('e')
-hold on
-subplot(717)
-plot(t,x6,'m',t,x6','mo'),grid
-xlabel('tid (s)'),ylabel('edot')
-hold on
 
 
-x_enc = load('x_enc');
 
-numPlots = size(x_enc.ans, 1) - 1;
 
-for i = 1 : numPlots
-   subplot(numPlots+1, 1, i+1)
-   plot(x_enc.ans(1,:), x_enc.ans(i+1,:))
-end

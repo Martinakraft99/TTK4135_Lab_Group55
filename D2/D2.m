@@ -48,10 +48,10 @@ vub(N*mx+M*mu)  = 0;                    % We want the last input to be zero
 
 % Generate the matrix Q and the vector c (objecitve function weights in the QP problem) 
 Q1 = zeros(mx,mx);
-Q1(1,1) = 10;                            % Weight on state x1
-Q1(2,2) = .1;                            % Weight on state x2
-Q1(3,3) = 1;                            % Weight on state x3
-Q1(4,4) = 1;                            % Weight on state x4
+Q1(1,1) = .1;                            % Weight on state x1
+Q1(2,2) = 0;                            % Weight on state x2
+Q1(3,3) = 0;                            % Weight on state x3
+Q1(4,4) = 0;                            % Weight on state x4
 P1 = 0;                                % Weight on input
 Q = gen_q(Q1,P1,N,M);                                  % Generate Q, hint: gen_q
 c = zeros((mx+mu)*N,1);                                  % Generate c, this is the linear constant term in the QP

@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD3".
  *
- * Model version              : 11.5
+ * Model version              : 11.6
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Thu Mar  4 14:54:02 2021
+ * C source code generated on : Sat Mar 27 15:01:32 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -21,13 +21,18 @@
 #ifndef RTW_HEADER_helicopterD3_h_
 #define RTW_HEADER_helicopterD3_h_
 #include <math.h>
+#include <stddef.h>
 #include <string.h>
 #ifndef helicopterD3_COMMON_INCLUDES_
 #define helicopterD3_COMMON_INCLUDES_
+#include <stdio.h>
+#include <string.h>
 #include "rtwtypes.h"
 #include "zero_crossing_types.h"
 #include "simstruc.h"
 #include "fixedpoint.h"
+#include "dt_info.h"
+#include "ext_work.h"
 #include "hil.h"
 #include "quanser_messages.h"
 #include "quanser_extern.h"
@@ -38,8 +43,8 @@
 /* Shared type includes */
 #include "multiword_types.h"
 #include "rtGetInf.h"
-#include "rt_defines.h"
 #include "rt_nonfinite.h"
+#include "rt_defines.h"
 
 /* Macros for accessing real-time model data structure */
 #ifndef rtmGetBlockIO
@@ -862,13 +867,21 @@
 /* Block signals (default storage) */
 typedef struct {
   real_T TravelCounttorad;             /* '<S4>/Travel: Count to rad' */
+  real_T Gain;                         /* '<S13>/Gain' */
   real_T Sum4;                         /* '<Root>/Sum4' */
+  real_T Gain_d;                       /* '<S14>/Gain' */
   real_T PitchCounttorad;              /* '<S4>/Pitch: Count to rad' */
-  real_T Gain;                         /* '<S10>/Gain' */
+  real_T Gain_i;                       /* '<S10>/Gain' */
+  real_T Gain_b;                       /* '<S11>/Gain' */
   real_T ElevationCounttorad;          /* '<S4>/Elevation: Count to rad' */
+  real_T Gain_e;                       /* '<S8>/Gain' */
   real_T Sum;                          /* '<Root>/Sum' */
-  real_T FrontmotorSaturation;         /* '<S4>/Front motor: Saturation' */
+  real_T Gain_dg;                      /* '<S9>/Gain' */
+  real_T Gain1[6];                     /* '<S2>/Gain1' */
+  real_T u;                            /* '<Root>/Sum3' */
+  real_T Gain_l;                       /* '<S12>/Gain' */
   real_T BackmotorSaturation;          /* '<S4>/Back motor: Saturation' */
+  real_T FrontmotorSaturation;         /* '<S4>/Front motor: Saturation' */
   real_T In1;                          /* '<S7>/In1' */
 } B_helicopterD3_T;
 
@@ -882,9 +895,17 @@ typedef struct {
   real_T HILInitialize_FilterFrequency[8];/* '<Root>/HIL Initialize' */
   real_T HILInitialize_POSortedFreqs[8];/* '<Root>/HIL Initialize' */
   real_T HILInitialize_POValues[8];    /* '<Root>/HIL Initialize' */
+  real_T TimeStampA;                   /* '<S4>/Derivative' */
+  real_T LastUAtTimeA;                 /* '<S4>/Derivative' */
+  real_T TimeStampB;                   /* '<S4>/Derivative' */
+  real_T LastUAtTimeB;                 /* '<S4>/Derivative' */
   real_T HILWriteAnalog_Buffer[2];     /* '<S4>/HIL Write Analog' */
   t_card HILInitialize_Card;           /* '<Root>/HIL Initialize' */
   t_task HILReadEncoderTimebase_Task;  /* '<S4>/HIL Read Encoder Timebase' */
+  struct {
+    void *FilePtr;
+  } _PWORK;                            /* '<Root>/       ' */
+
   struct {
     void *TimePtr;
     void *DataPtr;
@@ -897,6 +918,46 @@ typedef struct {
     void *RSimInfoPtr;
   } FromWorkspace_PWORK;               /* '<Root>/From Workspace' */
 
+  struct {
+    void *FilePtr;
+  } _PWORK_f;                          /* '<Root>/            ' */
+
+  struct {
+    void *LoggedData;
+  } ElevationScopedegs_PWORK;          /* '<S4>/Elevation: Scope [deg//s]' */
+
+  struct {
+    void *LoggedData;
+  } ElevationScopedeg_PWORK;           /* '<S4>/Elevation: Scope [deg]' */
+
+  struct {
+    void *LoggedData;
+  } PitchScopedeg_PWORK;               /* '<S4>/Pitch: Scope [deg]' */
+
+  struct {
+    void *LoggedData;
+  } PtichrateScopedegs_PWORK;          /* '<S4>/Ptich rate: Scope [deg//s]' */
+
+  struct {
+    void *LoggedData;
+  } PtichrateScopedegs1_PWORK;         /* '<S4>/Ptich rate: Scope [deg//s]1' */
+
+  struct {
+    void *LoggedData;
+  } TravelrateScopedegs_PWORK;         /* '<S4>/Travel rate: Scope [deg//s]' */
+
+  struct {
+    void *LoggedData;
+  } TravelScopedeg_PWORK;              /* '<S4>/Travel: Scope [deg]' */
+
+  struct {
+    void *LoggedData;
+  } Backmotor_PWORK;                   /* '<S4>/Back motor' */
+
+  struct {
+    void *LoggedData;
+  } Frontmotor_PWORK;                  /* '<S4>/Front motor' */
+
   void *HILWriteAnalog_PWORK;          /* '<S4>/HIL Write Analog' */
   int32_T HILInitialize_ClockModes[3]; /* '<Root>/HIL Initialize' */
   int32_T HILInitialize_QuadratureModes[8];/* '<Root>/HIL Initialize' */
@@ -907,6 +968,11 @@ typedef struct {
   int32_T HILReadEncoderTimebase_Buffer[3];/* '<S4>/HIL Read Encoder Timebase' */
   uint32_T HILInitialize_POSortedChans[8];/* '<Root>/HIL Initialize' */
   struct {
+    int_T Count;
+    int_T Decimation;
+  } _IWORK;                            /* '<Root>/       ' */
+
+  struct {
     int_T PrevIndex;
   } FromWorkspace1_IWORK;              /* '<S6>/From Workspace1' */
 
@@ -914,7 +980,13 @@ typedef struct {
     int_T PrevIndex;
   } FromWorkspace_IWORK;               /* '<Root>/From Workspace' */
 
+  struct {
+    int_T Count;
+    int_T Decimation;
+  } _IWORK_f;                          /* '<Root>/            ' */
+
   int8_T If_ActiveSubsystem;           /* '<S3>/If' */
+  int8_T IfActionSubsystem_SubsysRanBC;/* '<S3>/If Action Subsystem' */
 } DW_helicopterD3_T;
 
 /* Continuous states (default storage) */
@@ -1132,17 +1204,20 @@ struct P_helicopterD3_T_ {
   real_T Frontgain_Gain;               /* Expression: 0.5
                                         * Referenced by: '<S1>/Front gain'
                                         */
-  real_T FrontmotorSaturation_UpperSat;/* Expression: 5
-                                        * Referenced by: '<S4>/Front motor: Saturation'
-                                        */
-  real_T FrontmotorSaturation_LowerSat;/* Expression: -5
-                                        * Referenced by: '<S4>/Front motor: Saturation'
+  real_T Gain_Gain_a1;                 /* Expression: 180/pi
+                                        * Referenced by: '<S12>/Gain'
                                         */
   real_T BackmotorSaturation_UpperSat; /* Expression: 5
                                         * Referenced by: '<S4>/Back motor: Saturation'
                                         */
   real_T BackmotorSaturation_LowerSat; /* Expression: -5
                                         * Referenced by: '<S4>/Back motor: Saturation'
+                                        */
+  real_T FrontmotorSaturation_UpperSat;/* Expression: 5
+                                        * Referenced by: '<S4>/Front motor: Saturation'
+                                        */
+  real_T FrontmotorSaturation_LowerSat;/* Expression: -5
+                                        * Referenced by: '<S4>/Front motor: Saturation'
                                         */
   int32_T HILInitialize_CKChannels[3];
                                  /* Computed Parameter: HILInitialize_CKChannels

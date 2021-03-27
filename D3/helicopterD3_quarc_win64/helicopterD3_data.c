@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD3".
  *
- * Model version              : 11.5
+ * Model version              : 11.6
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Thu Mar  4 14:54:02 2021
+ * C source code generated on : Sat Mar 27 15:01:32 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -26,8 +26,8 @@ P_helicopterD3_T helicopterD3_P = {
   /* Variable: K
    * Referenced by: '<S6>/Gain'
    */
-  { -0.64883001049730393, -2.4746501257144358, 1.3121992425463944,
-    0.46249151936295974 },
+  { -5.1611259761313164, -11.164822583826066, 4.3145402011149008,
+    1.0033251744283289 },
 
   /* Variable: K_ed
    * Referenced by: '<S3>/K_ed'
@@ -299,23 +299,28 @@ P_helicopterD3_T helicopterD3_P = {
    */
   0.5,
 
+  /* Expression: 180/pi
+   * Referenced by: '<S12>/Gain'
+   */
+  57.295779513082323,
+
   /* Expression: 5
-   * Referenced by: '<S4>/Front motor: Saturation'
+   * Referenced by: '<S4>/Back motor: Saturation'
    */
   5.0,
 
   /* Expression: -5
-   * Referenced by: '<S4>/Front motor: Saturation'
+   * Referenced by: '<S4>/Back motor: Saturation'
    */
   -5.0,
 
   /* Expression: 5
-   * Referenced by: '<S4>/Back motor: Saturation'
+   * Referenced by: '<S4>/Front motor: Saturation'
    */
   5.0,
 
   /* Expression: -5
-   * Referenced by: '<S4>/Back motor: Saturation'
+   * Referenced by: '<S4>/Front motor: Saturation'
    */
   -5.0,
 
