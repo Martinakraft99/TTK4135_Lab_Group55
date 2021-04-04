@@ -102,8 +102,8 @@ x = [x1 x2 x3 x4];
 
 
 time_steps = [0:delta_t:(N+2*num_variables)*delta_t];
-ts_u = timeseries(u, time_steps)
-ts_x = timeseries(x, time_steps)
+ts_u = timeseries(u, time_steps);
+ts_x = timeseries(x, time_steps);
 
 
 %% Plotting

@@ -99,21 +99,27 @@ rec_inputD3_6 = recordedInputD3_6.ans(2,:);
 
 
 figure(1)
-plot(rec_timeD3_1, rec_lambdaD3_1, rec_timeD3_2, rec_lambdaD3_2, rec_timeD3_3, rec_lambdaD3_3,...
-    rec_timeD3_4, rec_lambdaD3_4, rec_timeD3_5, rec_lambdaD3_5,  rec_timeD3_6, rec_lambdaD3_6)
-%set(gca,'YTick',-pi:3*pi)
-%set(gca,'YTickLabel', {'-\pi','0','\pi','2\pi'})
-xline(5,'--','Color','red');
-xline(20,'--','Color','red');
-legend('D1','D2','D3', 'D4', 'D5', 'D6')
+plot(rec_timeD3_6, rec_lambdaD3_6,'LineWidth',3)
+hold on;
+plot(t(:,1:101),x1(1:101,:),'--','LineWidth',3,'Color','#EDB120')
+xline(5,'--','Color','red','LineWidth',2);
+xline(20,'--','Color','red','LineWidth',2);
+legend('$\lambda$','$\lambda^*$','Interpreter','latex','FontSize',20)
+title('$\lambda$ vs $\lambda^*$','Interpreter','latex')
+xlabel('Time[s]','Interpreter','latex')
+ylabel('Travel[rad]','Interpreter','latex')
 grid on;
 
+
+
 figure(2)
-plot(rec_timeD3_1, rec_inputD3_1, rec_timeD3_2, rec_inputD3_2, rec_timeD3_3, rec_inputD3_3,...
-    rec_timeD3_4, rec_inputD3_4, rec_timeD3_5, rec_inputD3_5, rec_timeD3_6, rec_inputD3_6)
-%set(gca,'YTick',-pi:3*pi)
-%set(gca,'YTickLabel', {'-\pi','0','\pi','2\pi'})
-xline(5,'--','Color','red');
-xline(20,'--','Color','red');
-legend('D1','D2','D3', 'D4','D5','D6')
+plot(rec_timeD3_6, rec_inputD3_6,'LineWidth',2)
+hold on;
+plot(t(:,1:101),u(1:101,:),'--','LineWidth',2,'Color','#EDB120')
+xline(5,'--','Color','red','LineWidth',2);
+xline(20,'--','Color','red','LineWidth',2);
+legend('u_k','u_k^*')
+title('Input')
+xlabel('time(s)')
+ylabel('input(rad)')
 grid on;
