@@ -43,7 +43,7 @@ grid on;
 hold on;
 
 figure(2)
-plot(rec_timeD4_1, rec_elevD4_1, rec_timeD4_2, rec_elevD4_2)
+plot(rec_lambdaD4_1, rec_elevD4_1, rec_lambdaD4_2, rec_lambdaD4_2)
 %set(gca,'YTick',-pi:3*pi)
 %set(gca,'YTickLabel', {'-\pi','0','\pi','2\pi'})
 xline(5,'--','Color','red');
@@ -51,6 +51,9 @@ xline(20,'--','Color','red');
 legend('D1','D2')
 grid on;
 hold on;
+x1_padded = [zeros(2500,1);x1];
+econ_padded = [zeros(2500,1);econ];
+plot(x1_padded,econ_padded)
 
 figure(3)
 plot(rec_timeD4_1, rec_input1D4_1,rec_timeD4_1, rec_input2D4_1,rec_timeD4_2, rec_input1D4_2,rec_timeD4_2, rec_input2D4_2)

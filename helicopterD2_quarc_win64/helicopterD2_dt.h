@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD2".
  *
- * Model version              : 11.7
+ * Model version              : 11.8
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Sat Mar 27 12:53:25 2021
+ * C source code generated on : Thu Apr  8 17:49:59 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -62,7 +62,7 @@ static const char_T * rtDataTypeNames[] = {
 
 /* data type transitions for block I/O structure */
 static DataTypeTransition rtBTransitions[] = {
-  { (char_T *)(&helicopterD2_B.TravelCounttorad), 0, 0, 21 }
+  { (char_T *)(&helicopterD2_B.TravelCounttorad), 0, 0, 23 }
   ,
 
   { (char_T *)(&helicopterD2_DW.HILInitialize_AIMinimums[0]), 0, 0, 70 },
@@ -94,7 +94,7 @@ static DataTypeTransition rtPTransitions[] = {
 
   { (char_T *)(&helicopterD2_P.HILWriteAnalog_channels[0]), 7, 0, 2 },
 
-  { (char_T *)(&helicopterD2_P.HILInitialize_OOTerminate), 0, 0, 49 },
+  { (char_T *)(&helicopterD2_P.HILInitialize_OOTerminate), 0, 0, 51 },
 
   { (char_T *)(&helicopterD2_P.HILInitialize_CKChannels[0]), 6, 0, 10 },
 

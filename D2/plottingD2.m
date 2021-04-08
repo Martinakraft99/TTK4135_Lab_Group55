@@ -1,7 +1,11 @@
 % %% Plotting Day 2
-% 
+
+lambda_ref_Q10;
+lambda_ref_Q1;
+lambda_ref_Q01;
+
 % Load encoder values
-plots = [load('x_encQ(10,0,0,0).mat'), load('x_encQ1(1,0,0,0).mat'), load('x_encQ_1.mat')];
+plots = [load('q10.mat'), load('q1.mat'), load('q_1.mat')];
 
 T = plots(1).ans(1,:);
 X = [plots(1).ans(2,:); plots(2).ans(2,:); plots(3).ans(2,:)]; % extract lambda
@@ -9,7 +13,7 @@ labels = ['$q=10$ '; '$q=1$  '; '$q=0.1$'; 'optimal'];
 
 figure(1)
 
-correction = @(T) pi - pi/5*(1-exp(-T/20)).*T;
+correction = @(T) - pi/5*(1-exp(-T/20)).*T;
 correction_offset = @(T) pi;
 
 numX = size(X,1);

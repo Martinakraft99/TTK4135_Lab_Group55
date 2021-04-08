@@ -10,9 +10,9 @@ init01;
 A_c = [0  1          0          0          0          0;
        0  0       -K_2          0          0          0; 
        0  0          0          1          0          0;
-       0  0  -K_1*K_pp  -K_1*K_pd          0          0; 
+       0  0  -K_1*K_pp,  -K_1*K_pd          0          0; 
        0  0          0          0          0          1;
-       0  0          0          0  -K_3*K_ep  -K_3*K_ed ];
+       0  0          0          0  -K_3*K_ep,  -K_3*K_ed ];
 
 B_c = [       0         0;
               0         0;
@@ -40,7 +40,7 @@ n = N*nx+M*nu;
 lambda_0 = pi;
 lambda_f = 0;
 
-x0 = [lambda_0; 0 ; 0; 0; 0; 0];
+x0 = [lambda_0; 0; 0; 0; 0; 0];
 
 z  = zeros(n, 1);           % Initialize z for horizon
 z0 = z;                     % Initial value for optimization
@@ -71,8 +71,8 @@ Q = gen_q(Q1, q, N, M);
 c = zeros(n, 1);            % Linear term
 
 %% LQR
-LQR_Q = diag([10; 5; .1; .1; 10; 10]);  %Rank = nx
-LQR_R = diag([.1;.1]);                  %Rank = nu
+LQR_Q = diag([5; 5; 10; .1; 1; .1]);  %Rank = nx
+LQR_R = diag([.1; .5]);                  %Rank = nu
 
 K = dlqr(A_d, B_d, LQR_Q, LQR_R);
 
@@ -86,7 +86,7 @@ tic
 ofun = @(z) z.'* Q * z;
 
 % [z,lambda] = quadprog(G,c,[],[],Aeq,beq,vlb,vub); % hint: quadprog. Type 'doc quadprog' for more info 
-options = optimoptions('fmincon','MaxFunctionEvaluations',1e4);
+options = optimoptions('fmincon','MaxFunctionEvaluations',1e5);
 % z = fmincon(ofun, z, [], [], Aeq, beq, vlb,vub,@get_elevation_constraint,options);
 z = fmincon(ofun, z, [], [], Aeq, beq, vlb, vub, @get_elevation_constraint, options);
 
@@ -151,9 +151,12 @@ for i = 1 : length(x1)
 %     econ(1+i) = alpha*exp(-beta*(z(1+i*mx)-lambda_t)^2);
 end
 
-plot(econ)
-% 
-% 
+figure(7)
+plot(x1,econ)
+hold on;
+plot(x1,x5)
+
+
 figure(1)
 subplot(711)
 stairs(t,u),grid

@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD2".
  *
- * Model version              : 11.7
+ * Model version              : 11.8
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Sat Mar 27 12:53:25 2021
+ * C source code generated on : Thu Apr  8 17:49:59 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -24,27 +24,27 @@
 /* Block parameters (default storage) */
 P_helicopterD2_T helicopterD2_P = {
   /* Variable: K_ed
-   * Referenced by: '<S3>/K_ed'
+   * Referenced by: '<S5>/K_ed'
    */
   18.941216445803605,
 
   /* Variable: K_ei
-   * Referenced by: '<S3>/K_ei'
+   * Referenced by: '<S5>/K_ei'
    */
   0.7576486578321443,
 
   /* Variable: K_ep
-   * Referenced by: '<S3>/K_ep'
+   * Referenced by: '<S5>/K_ep'
    */
   7.5764865783214423,
 
   /* Variable: K_pd
-   * Referenced by: '<S5>/K_pd'
+   * Referenced by: '<S7>/K_pd'
    */
   5.573088685015291,
 
   /* Variable: K_pp
-   * Referenced by: '<S5>/K_pp'
+   * Referenced by: '<S7>/K_pp'
    */
   5.0157798165137617,
 
@@ -59,17 +59,17 @@ P_helicopterD2_T helicopterD2_P = {
   6.7,
 
   /* Variable: elevation_gain
-   * Referenced by: '<S4>/Elevation_gain'
+   * Referenced by: '<S6>/Elevation_gain'
    */
   1.0,
 
   /* Variable: travel_gain
-   * Referenced by: '<S4>/Travel_gain'
+   * Referenced by: '<S6>/Travel_gain'
    */
   1.0,
 
   /* Mask Parameter: HILWriteAnalog_channels
-   * Referenced by: '<S4>/HIL Write Analog'
+   * Referenced by: '<S6>/HIL Write Analog'
    */
   { 0U, 1U },
 
@@ -158,73 +158,78 @@ P_helicopterD2_T helicopterD2_P = {
    */
   0.0,
 
+  /* Expression: 180
+   * Referenced by: '<Root>/travel_offset [deg]'
+   */
+  180.0,
+
   /* Expression: 2*pi/8192
-   * Referenced by: '<S4>/Travel: Count to rad'
+   * Referenced by: '<S6>/Travel: Count to rad'
    */
   0.00076699039394282058,
-
-  /* Expression: 180/pi
-   * Referenced by: '<S13>/Gain'
-   */
-  57.295779513082323,
-
-  /* Computed Parameter: TravelTransferFcn_A
-   * Referenced by: '<S4>/Travel: Transfer Fcn'
-   */
-  -10.0,
-
-  /* Computed Parameter: TravelTransferFcn_C
-   * Referenced by: '<S4>/Travel: Transfer Fcn'
-   */
-  -100.0,
-
-  /* Computed Parameter: TravelTransferFcn_D
-   * Referenced by: '<S4>/Travel: Transfer Fcn'
-   */
-  10.0,
 
   /* Expression: 180/pi
    * Referenced by: '<S14>/Gain'
    */
   57.295779513082323,
 
-  /* Expression: 2*pi /4096
-   * Referenced by: '<S4>/Pitch: Count to rad'
+  /* Computed Parameter: TravelTransferFcn_A
+   * Referenced by: '<S6>/Travel: Transfer Fcn'
    */
-  0.0015339807878856412,
+  -10.0,
+
+  /* Computed Parameter: TravelTransferFcn_C
+   * Referenced by: '<S6>/Travel: Transfer Fcn'
+   */
+  -100.0,
+
+  /* Computed Parameter: TravelTransferFcn_D
+   * Referenced by: '<S6>/Travel: Transfer Fcn'
+   */
+  10.0,
 
   /* Expression: 180/pi
-   * Referenced by: '<S10>/Gain'
+   * Referenced by: '<S15>/Gain'
    */
   57.295779513082323,
 
-  /* Computed Parameter: PitchTransferFcn_A
-   * Referenced by: '<S4>/Pitch: Transfer Fcn'
+  /* Expression: 2*pi /4096
+   * Referenced by: '<S6>/Pitch: Count to rad'
    */
-  -30.0,
-
-  /* Computed Parameter: PitchTransferFcn_C
-   * Referenced by: '<S4>/Pitch: Transfer Fcn'
-   */
-  -900.0,
-
-  /* Computed Parameter: PitchTransferFcn_D
-   * Referenced by: '<S4>/Pitch: Transfer Fcn'
-   */
-  30.0,
+  0.0015339807878856412,
 
   /* Expression: 180/pi
    * Referenced by: '<S11>/Gain'
    */
   57.295779513082323,
 
+  /* Computed Parameter: PitchTransferFcn_A
+   * Referenced by: '<S6>/Pitch: Transfer Fcn'
+   */
+  -30.0,
+
+  /* Computed Parameter: PitchTransferFcn_C
+   * Referenced by: '<S6>/Pitch: Transfer Fcn'
+   */
+  -900.0,
+
+  /* Computed Parameter: PitchTransferFcn_D
+   * Referenced by: '<S6>/Pitch: Transfer Fcn'
+   */
+  30.0,
+
+  /* Expression: 180/pi
+   * Referenced by: '<S12>/Gain'
+   */
+  57.295779513082323,
+
   /* Expression: -2 * pi /4096
-   * Referenced by: '<S4>/Elevation: Count to rad'
+   * Referenced by: '<S6>/Elevation: Count to rad'
    */
   -0.0015339807878856412,
 
   /* Expression: 180/pi
-   * Referenced by: '<S8>/Gain'
+   * Referenced by: '<S9>/Gain'
    */
   57.295779513082323,
 
@@ -234,22 +239,22 @@ P_helicopterD2_T helicopterD2_P = {
   -30.0,
 
   /* Computed Parameter: ElevationTransferFcn_A
-   * Referenced by: '<S4>/Elevation: Transfer Fcn'
+   * Referenced by: '<S6>/Elevation: Transfer Fcn'
    */
   -10.0,
 
   /* Computed Parameter: ElevationTransferFcn_C
-   * Referenced by: '<S4>/Elevation: Transfer Fcn'
+   * Referenced by: '<S6>/Elevation: Transfer Fcn'
    */
   -100.0,
 
   /* Computed Parameter: ElevationTransferFcn_D
-   * Referenced by: '<S4>/Elevation: Transfer Fcn'
+   * Referenced by: '<S6>/Elevation: Transfer Fcn'
    */
   10.0,
 
   /* Expression: 180/pi
-   * Referenced by: '<S9>/Gain'
+   * Referenced by: '<S10>/Gain'
    */
   57.295779513082323,
 
@@ -258,23 +263,28 @@ P_helicopterD2_T helicopterD2_P = {
    */
   0.017453292519943295,
 
-  /* Expression: 180/pi
-   * Referenced by: '<S6>/Gain'
+  /* Expression: pi/180
+   * Referenced by: '<S3>/Gain1'
    */
-  57.295779513082323,
+  0.017453292519943295,
+
+  /* Expression: pi/180
+   * Referenced by: '<S4>/Gain1'
+   */
+  0.017453292519943295,
 
   /* Expression: 0
-   * Referenced by: '<S3>/Integrator'
+   * Referenced by: '<S5>/Integrator'
    */
   0.0,
 
   /* Expression: inf
-   * Referenced by: '<S3>/Integrator'
+   * Referenced by: '<S5>/Integrator'
    */
   0.0,
 
   /* Expression: -inf
-   * Referenced by: '<S3>/Integrator'
+   * Referenced by: '<S5>/Integrator'
    */
   0.0,
 
@@ -294,27 +304,27 @@ P_helicopterD2_T helicopterD2_P = {
   0.5,
 
   /* Expression: 180/pi
-   * Referenced by: '<S12>/Gain'
+   * Referenced by: '<S13>/Gain'
    */
   57.295779513082323,
 
   /* Expression: 5
-   * Referenced by: '<S4>/Back motor: Saturation'
+   * Referenced by: '<S6>/Back motor: Saturation'
    */
   5.0,
 
   /* Expression: -5
-   * Referenced by: '<S4>/Back motor: Saturation'
+   * Referenced by: '<S6>/Back motor: Saturation'
    */
   -5.0,
 
   /* Expression: 5
-   * Referenced by: '<S4>/Front motor: Saturation'
+   * Referenced by: '<S6>/Front motor: Saturation'
    */
   5.0,
 
   /* Expression: -5
-   * Referenced by: '<S4>/Front motor: Saturation'
+   * Referenced by: '<S6>/Front motor: Saturation'
    */
   -5.0,
 
@@ -354,7 +364,7 @@ P_helicopterD2_T helicopterD2_P = {
   1,
 
   /* Computed Parameter: HILReadEncoderTimebase_Clock
-   * Referenced by: '<S4>/HIL Read Encoder Timebase'
+   * Referenced by: '<S6>/HIL Read Encoder Timebase'
    */
   0,
 
@@ -384,12 +394,12 @@ P_helicopterD2_T helicopterD2_P = {
   { 0U, 1U, 2U, 3U, 4U, 5U, 6U, 7U },
 
   /* Computed Parameter: HILReadEncoderTimebase_Channels
-   * Referenced by: '<S4>/HIL Read Encoder Timebase'
+   * Referenced by: '<S6>/HIL Read Encoder Timebase'
    */
   { 0U, 1U, 2U },
 
   /* Computed Parameter: HILReadEncoderTimebase_SamplesI
-   * Referenced by: '<S4>/HIL Read Encoder Timebase'
+   * Referenced by: '<S6>/HIL Read Encoder Timebase'
    */
   500U,
 
@@ -569,17 +579,17 @@ P_helicopterD2_T helicopterD2_P = {
   1,
 
   /* Computed Parameter: HILReadEncoderTimebase_Active
-   * Referenced by: '<S4>/HIL Read Encoder Timebase'
+   * Referenced by: '<S6>/HIL Read Encoder Timebase'
    */
   1,
 
   /* Computed Parameter: HILWriteAnalog_Active
-   * Referenced by: '<S4>/HIL Write Analog'
+   * Referenced by: '<S6>/HIL Write Analog'
    */
   0,
 
   /* Computed Parameter: HILReadEncoderTimebase_Overflow
-   * Referenced by: '<S4>/HIL Read Encoder Timebase'
+   * Referenced by: '<S6>/HIL Read Encoder Timebase'
    */
   1U
 };

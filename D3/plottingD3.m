@@ -106,7 +106,19 @@ xline(5,'--','Color','red','LineWidth',2);
 xline(20,'--','Color','red','LineWidth',2);
 legend('$\lambda$','$\lambda^*$','Interpreter','latex','FontSize',20)
 title('$\lambda$ vs $\lambda^*$','Interpreter','latex')
-xlabel('Time[s]','Interpreter','latex')
+xlabel('Time [$s$]','Interpreter','latex')
+ylabel('Travel[rad]','Interpreter','latex')
+grid on;
+
+figure(3)
+plot(rec_timeD3_6, rec_pitchD3_6,'LineWidth',3)
+hold on;
+plot(t(:,1:101),x3(1:101,:),'--','LineWidth',3,'Color','#EDB120')
+xline(5,'--','Color','red','LineWidth',2);
+xline(20,'--','Color','red','LineWidth',2);
+legend('$\lambda$','$\lambda^*$','Interpreter','latex','FontSize',20)
+title('$\lambda$ vs $\lambda^*$','Interpreter','latex')
+xlabel('Time [$s$]','Interpreter','latex')
 ylabel('Travel[rad]','Interpreter','latex')
 grid on;
 

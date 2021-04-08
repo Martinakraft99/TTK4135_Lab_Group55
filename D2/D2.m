@@ -54,7 +54,7 @@ z  = zeros(n, 1);           % Initialize z for horizon
 z0 = z;                     % Initial value
 
 %% Matrices in objective function:
-q = 10;                     % Weight on input (0.1, 1, 10)
+q = .1;                     % Weight on input (0.1, 1, 10)
 Q1 = diag([1 0 0 0]);       % Weight on states
 
 Q = gen_q(Q1, q, N, M);

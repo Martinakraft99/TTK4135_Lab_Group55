@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD2".
  *
- * Model version              : 11.7
+ * Model version              : 11.8
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Sat Mar 27 12:53:25 2021
+ * C source code generated on : Thu Apr  8 17:49:59 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -866,22 +866,24 @@
 
 /* Block signals (default storage) */
 typedef struct {
-  real_T TravelCounttorad;             /* '<S4>/Travel: Count to rad' */
-  real_T Gain;                         /* '<S13>/Gain' */
-  real_T Gain_d;                       /* '<S14>/Gain' */
-  real_T PitchCounttorad;              /* '<S4>/Pitch: Count to rad' */
-  real_T Gain_i;                       /* '<S10>/Gain' */
-  real_T Gain_b;                       /* '<S11>/Gain' */
-  real_T ElevationCounttorad;          /* '<S4>/Elevation: Count to rad' */
-  real_T Gain_e;                       /* '<S8>/Gain' */
+  real_T TravelCounttorad;             /* '<S6>/Travel: Count to rad' */
+  real_T Gain;                         /* '<S14>/Gain' */
+  real_T Sum3;                         /* '<Root>/Sum3' */
+  real_T Gain_d;                       /* '<S15>/Gain' */
+  real_T PitchCounttorad;              /* '<S6>/Pitch: Count to rad' */
+  real_T Gain_i;                       /* '<S11>/Gain' */
+  real_T Gain_b;                       /* '<S12>/Gain' */
+  real_T ElevationCounttorad;          /* '<S6>/Elevation: Count to rad' */
+  real_T Gain_e;                       /* '<S9>/Gain' */
   real_T Sum;                          /* '<Root>/Sum' */
-  real_T Gain_dg;                      /* '<S9>/Gain' */
+  real_T Gain_dg;                      /* '<S10>/Gain' */
   real_T Gain1[6];                     /* '<S2>/Gain1' */
-  real_T Gain_o;                       /* '<S6>/Gain' */
-  real_T Gain_l;                       /* '<S12>/Gain' */
-  real_T BackmotorSaturation;          /* '<S4>/Back motor: Saturation' */
-  real_T FrontmotorSaturation;         /* '<S4>/Front motor: Saturation' */
-  real_T In1;                          /* '<S7>/In1' */
+  real_T Gain1_k;                      /* '<S3>/Gain1' */
+  real_T Gain1_g;                      /* '<S4>/Gain1' */
+  real_T Gain_l;                       /* '<S13>/Gain' */
+  real_T BackmotorSaturation;          /* '<S6>/Back motor: Saturation' */
+  real_T FrontmotorSaturation;         /* '<S6>/Front motor: Saturation' */
+  real_T In1;                          /* '<S8>/In1' */
 } B_helicopterD2_T;
 
 /* Block states (default storage) for system '<Root>' */
@@ -894,13 +896,13 @@ typedef struct {
   real_T HILInitialize_FilterFrequency[8];/* '<Root>/HIL Initialize' */
   real_T HILInitialize_POSortedFreqs[8];/* '<Root>/HIL Initialize' */
   real_T HILInitialize_POValues[8];    /* '<Root>/HIL Initialize' */
-  real_T TimeStampA;                   /* '<S4>/Derivative' */
-  real_T LastUAtTimeA;                 /* '<S4>/Derivative' */
-  real_T TimeStampB;                   /* '<S4>/Derivative' */
-  real_T LastUAtTimeB;                 /* '<S4>/Derivative' */
-  real_T HILWriteAnalog_Buffer[2];     /* '<S4>/HIL Write Analog' */
+  real_T TimeStampA;                   /* '<S6>/Derivative' */
+  real_T LastUAtTimeA;                 /* '<S6>/Derivative' */
+  real_T TimeStampB;                   /* '<S6>/Derivative' */
+  real_T LastUAtTimeB;                 /* '<S6>/Derivative' */
+  real_T HILWriteAnalog_Buffer[2];     /* '<S6>/HIL Write Analog' */
   t_card HILInitialize_Card;           /* '<Root>/HIL Initialize' */
-  t_task HILReadEncoderTimebase_Task;  /* '<S4>/HIL Read Encoder Timebase' */
+  t_task HILReadEncoderTimebase_Task;  /* '<S6>/HIL Read Encoder Timebase' */
   struct {
     void *FilePtr;
   } _PWORK;                            /* '<Root>/       ' */
@@ -917,48 +919,48 @@ typedef struct {
 
   struct {
     void *LoggedData;
-  } ElevationScopedegs_PWORK;          /* '<S4>/Elevation: Scope [deg//s]' */
+  } ElevationScopedegs_PWORK;          /* '<S6>/Elevation: Scope [deg//s]' */
 
   struct {
     void *LoggedData;
-  } ElevationScopedeg_PWORK;           /* '<S4>/Elevation: Scope [deg]' */
+  } ElevationScopedeg_PWORK;           /* '<S6>/Elevation: Scope [deg]' */
 
   struct {
     void *LoggedData;
-  } PitchScopedeg_PWORK;               /* '<S4>/Pitch: Scope [deg]' */
+  } PitchScopedeg_PWORK;               /* '<S6>/Pitch: Scope [deg]' */
 
   struct {
     void *LoggedData;
-  } PtichrateScopedegs_PWORK;          /* '<S4>/Ptich rate: Scope [deg//s]' */
+  } PtichrateScopedegs_PWORK;          /* '<S6>/Ptich rate: Scope [deg//s]' */
 
   struct {
     void *LoggedData;
-  } PtichrateScopedegs1_PWORK;         /* '<S4>/Ptich rate: Scope [deg//s]1' */
+  } PtichrateScopedegs1_PWORK;         /* '<S6>/Ptich rate: Scope [deg//s]1' */
 
   struct {
     void *LoggedData;
-  } TravelrateScopedegs_PWORK;         /* '<S4>/Travel rate: Scope [deg//s]' */
+  } TravelrateScopedegs_PWORK;         /* '<S6>/Travel rate: Scope [deg//s]' */
 
   struct {
     void *LoggedData;
-  } TravelScopedeg_PWORK;              /* '<S4>/Travel: Scope [deg]' */
+  } TravelScopedeg_PWORK;              /* '<S6>/Travel: Scope [deg]' */
 
   struct {
     void *LoggedData;
-  } Backmotor_PWORK;                   /* '<S4>/Back motor' */
+  } Backmotor_PWORK;                   /* '<S6>/Back motor' */
 
   struct {
     void *LoggedData;
-  } Frontmotor_PWORK;                  /* '<S4>/Front motor' */
+  } Frontmotor_PWORK;                  /* '<S6>/Front motor' */
 
-  void *HILWriteAnalog_PWORK;          /* '<S4>/HIL Write Analog' */
+  void *HILWriteAnalog_PWORK;          /* '<S6>/HIL Write Analog' */
   int32_T HILInitialize_ClockModes[3]; /* '<Root>/HIL Initialize' */
   int32_T HILInitialize_QuadratureModes[8];/* '<Root>/HIL Initialize' */
   int32_T HILInitialize_InitialEICounts[8];/* '<Root>/HIL Initialize' */
   int32_T HILInitialize_POModeValues[8];/* '<Root>/HIL Initialize' */
   int32_T HILInitialize_POAlignValues[8];/* '<Root>/HIL Initialize' */
   int32_T HILInitialize_POPolarityVals[8];/* '<Root>/HIL Initialize' */
-  int32_T HILReadEncoderTimebase_Buffer[3];/* '<S4>/HIL Read Encoder Timebase' */
+  int32_T HILReadEncoderTimebase_Buffer[3];/* '<S6>/HIL Read Encoder Timebase' */
   uint32_T HILInitialize_POSortedChans[8];/* '<Root>/HIL Initialize' */
   struct {
     int_T Count;
@@ -969,32 +971,32 @@ typedef struct {
     int_T PrevIndex;
   } FromWorkspace_IWORK;               /* '<Root>/From Workspace' */
 
-  int8_T If_ActiveSubsystem;           /* '<S3>/If' */
-  int8_T IfActionSubsystem_SubsysRanBC;/* '<S3>/If Action Subsystem' */
+  int8_T If_ActiveSubsystem;           /* '<S5>/If' */
+  int8_T IfActionSubsystem_SubsysRanBC;/* '<S5>/If Action Subsystem' */
 } DW_helicopterD2_T;
 
 /* Continuous states (default storage) */
 typedef struct {
-  real_T TravelTransferFcn_CSTATE;     /* '<S4>/Travel: Transfer Fcn' */
-  real_T PitchTransferFcn_CSTATE;      /* '<S4>/Pitch: Transfer Fcn' */
-  real_T ElevationTransferFcn_CSTATE;  /* '<S4>/Elevation: Transfer Fcn' */
-  real_T Integrator_CSTATE;            /* '<S3>/Integrator' */
+  real_T TravelTransferFcn_CSTATE;     /* '<S6>/Travel: Transfer Fcn' */
+  real_T PitchTransferFcn_CSTATE;      /* '<S6>/Pitch: Transfer Fcn' */
+  real_T ElevationTransferFcn_CSTATE;  /* '<S6>/Elevation: Transfer Fcn' */
+  real_T Integrator_CSTATE;            /* '<S5>/Integrator' */
 } X_helicopterD2_T;
 
 /* State derivatives (default storage) */
 typedef struct {
-  real_T TravelTransferFcn_CSTATE;     /* '<S4>/Travel: Transfer Fcn' */
-  real_T PitchTransferFcn_CSTATE;      /* '<S4>/Pitch: Transfer Fcn' */
-  real_T ElevationTransferFcn_CSTATE;  /* '<S4>/Elevation: Transfer Fcn' */
-  real_T Integrator_CSTATE;            /* '<S3>/Integrator' */
+  real_T TravelTransferFcn_CSTATE;     /* '<S6>/Travel: Transfer Fcn' */
+  real_T PitchTransferFcn_CSTATE;      /* '<S6>/Pitch: Transfer Fcn' */
+  real_T ElevationTransferFcn_CSTATE;  /* '<S6>/Elevation: Transfer Fcn' */
+  real_T Integrator_CSTATE;            /* '<S5>/Integrator' */
 } XDot_helicopterD2_T;
 
 /* State disabled  */
 typedef struct {
-  boolean_T TravelTransferFcn_CSTATE;  /* '<S4>/Travel: Transfer Fcn' */
-  boolean_T PitchTransferFcn_CSTATE;   /* '<S4>/Pitch: Transfer Fcn' */
-  boolean_T ElevationTransferFcn_CSTATE;/* '<S4>/Elevation: Transfer Fcn' */
-  boolean_T Integrator_CSTATE;         /* '<S3>/Integrator' */
+  boolean_T TravelTransferFcn_CSTATE;  /* '<S6>/Travel: Transfer Fcn' */
+  boolean_T PitchTransferFcn_CSTATE;   /* '<S6>/Pitch: Transfer Fcn' */
+  boolean_T ElevationTransferFcn_CSTATE;/* '<S6>/Elevation: Transfer Fcn' */
+  boolean_T Integrator_CSTATE;         /* '<S5>/Integrator' */
 } XDis_helicopterD2_T;
 
 #ifndef ODE1_INTG
@@ -1024,19 +1026,19 @@ typedef struct {
 /* Parameters (default storage) */
 struct P_helicopterD2_T_ {
   real_T K_ed;                         /* Variable: K_ed
-                                        * Referenced by: '<S3>/K_ed'
+                                        * Referenced by: '<S5>/K_ed'
                                         */
   real_T K_ei;                         /* Variable: K_ei
-                                        * Referenced by: '<S3>/K_ei'
+                                        * Referenced by: '<S5>/K_ei'
                                         */
   real_T K_ep;                         /* Variable: K_ep
-                                        * Referenced by: '<S3>/K_ep'
+                                        * Referenced by: '<S5>/K_ep'
                                         */
   real_T K_pd;                         /* Variable: K_pd
-                                        * Referenced by: '<S5>/K_pd'
+                                        * Referenced by: '<S7>/K_pd'
                                         */
   real_T K_pp;                         /* Variable: K_pp
-                                        * Referenced by: '<S5>/K_pp'
+                                        * Referenced by: '<S7>/K_pp'
                                         */
   real_T Vd_ff;                        /* Variable: Vd_ff
                                         * Referenced by: '<Root>/Vd_bias'
@@ -1045,13 +1047,13 @@ struct P_helicopterD2_T_ {
                                         * Referenced by: '<Root>/Vs_bias'
                                         */
   real_T elevation_gain;               /* Variable: elevation_gain
-                                        * Referenced by: '<S4>/Elevation_gain'
+                                        * Referenced by: '<S6>/Elevation_gain'
                                         */
   real_T travel_gain;                  /* Variable: travel_gain
-                                        * Referenced by: '<S4>/Travel_gain'
+                                        * Referenced by: '<S6>/Travel_gain'
                                         */
   uint32_T HILWriteAnalog_channels[2];/* Mask Parameter: HILWriteAnalog_channels
-                                       * Referenced by: '<S4>/HIL Write Analog'
+                                       * Referenced by: '<S6>/HIL Write Analog'
                                        */
   real_T HILInitialize_OOTerminate;/* Expression: set_other_outputs_at_terminate
                                     * Referenced by: '<Root>/HIL Initialize'
@@ -1104,77 +1106,83 @@ struct P_helicopterD2_T_ {
   real_T HILInitialize_POWatchdog;     /* Expression: watchdog_pwm_outputs
                                         * Referenced by: '<Root>/HIL Initialize'
                                         */
+  real_T travel_offsetdeg_Value;       /* Expression: 180
+                                        * Referenced by: '<Root>/travel_offset [deg]'
+                                        */
   real_T TravelCounttorad_Gain;        /* Expression: 2*pi/8192
-                                        * Referenced by: '<S4>/Travel: Count to rad'
+                                        * Referenced by: '<S6>/Travel: Count to rad'
                                         */
   real_T Gain_Gain;                    /* Expression: 180/pi
-                                        * Referenced by: '<S13>/Gain'
-                                        */
-  real_T TravelTransferFcn_A;         /* Computed Parameter: TravelTransferFcn_A
-                                       * Referenced by: '<S4>/Travel: Transfer Fcn'
-                                       */
-  real_T TravelTransferFcn_C;         /* Computed Parameter: TravelTransferFcn_C
-                                       * Referenced by: '<S4>/Travel: Transfer Fcn'
-                                       */
-  real_T TravelTransferFcn_D;         /* Computed Parameter: TravelTransferFcn_D
-                                       * Referenced by: '<S4>/Travel: Transfer Fcn'
-                                       */
-  real_T Gain_Gain_l;                  /* Expression: 180/pi
                                         * Referenced by: '<S14>/Gain'
                                         */
+  real_T TravelTransferFcn_A;         /* Computed Parameter: TravelTransferFcn_A
+                                       * Referenced by: '<S6>/Travel: Transfer Fcn'
+                                       */
+  real_T TravelTransferFcn_C;         /* Computed Parameter: TravelTransferFcn_C
+                                       * Referenced by: '<S6>/Travel: Transfer Fcn'
+                                       */
+  real_T TravelTransferFcn_D;         /* Computed Parameter: TravelTransferFcn_D
+                                       * Referenced by: '<S6>/Travel: Transfer Fcn'
+                                       */
+  real_T Gain_Gain_l;                  /* Expression: 180/pi
+                                        * Referenced by: '<S15>/Gain'
+                                        */
   real_T PitchCounttorad_Gain;         /* Expression: 2*pi /4096
-                                        * Referenced by: '<S4>/Pitch: Count to rad'
+                                        * Referenced by: '<S6>/Pitch: Count to rad'
                                         */
   real_T Gain_Gain_a;                  /* Expression: 180/pi
-                                        * Referenced by: '<S10>/Gain'
-                                        */
-  real_T PitchTransferFcn_A;           /* Computed Parameter: PitchTransferFcn_A
-                                        * Referenced by: '<S4>/Pitch: Transfer Fcn'
-                                        */
-  real_T PitchTransferFcn_C;           /* Computed Parameter: PitchTransferFcn_C
-                                        * Referenced by: '<S4>/Pitch: Transfer Fcn'
-                                        */
-  real_T PitchTransferFcn_D;           /* Computed Parameter: PitchTransferFcn_D
-                                        * Referenced by: '<S4>/Pitch: Transfer Fcn'
-                                        */
-  real_T Gain_Gain_ae;                 /* Expression: 180/pi
                                         * Referenced by: '<S11>/Gain'
                                         */
+  real_T PitchTransferFcn_A;           /* Computed Parameter: PitchTransferFcn_A
+                                        * Referenced by: '<S6>/Pitch: Transfer Fcn'
+                                        */
+  real_T PitchTransferFcn_C;           /* Computed Parameter: PitchTransferFcn_C
+                                        * Referenced by: '<S6>/Pitch: Transfer Fcn'
+                                        */
+  real_T PitchTransferFcn_D;           /* Computed Parameter: PitchTransferFcn_D
+                                        * Referenced by: '<S6>/Pitch: Transfer Fcn'
+                                        */
+  real_T Gain_Gain_ae;                 /* Expression: 180/pi
+                                        * Referenced by: '<S12>/Gain'
+                                        */
   real_T ElevationCounttorad_Gain;     /* Expression: -2 * pi /4096
-                                        * Referenced by: '<S4>/Elevation: Count to rad'
+                                        * Referenced by: '<S6>/Elevation: Count to rad'
                                         */
   real_T Gain_Gain_lv;                 /* Expression: 180/pi
-                                        * Referenced by: '<S8>/Gain'
+                                        * Referenced by: '<S9>/Gain'
                                         */
   real_T elavation_offsetdeg_Value;    /* Expression: -30
                                         * Referenced by: '<Root>/elavation_offset [deg]'
                                         */
   real_T ElevationTransferFcn_A;   /* Computed Parameter: ElevationTransferFcn_A
-                                    * Referenced by: '<S4>/Elevation: Transfer Fcn'
+                                    * Referenced by: '<S6>/Elevation: Transfer Fcn'
                                     */
   real_T ElevationTransferFcn_C;   /* Computed Parameter: ElevationTransferFcn_C
-                                    * Referenced by: '<S4>/Elevation: Transfer Fcn'
+                                    * Referenced by: '<S6>/Elevation: Transfer Fcn'
                                     */
   real_T ElevationTransferFcn_D;   /* Computed Parameter: ElevationTransferFcn_D
-                                    * Referenced by: '<S4>/Elevation: Transfer Fcn'
+                                    * Referenced by: '<S6>/Elevation: Transfer Fcn'
                                     */
   real_T Gain_Gain_n;                  /* Expression: 180/pi
-                                        * Referenced by: '<S9>/Gain'
+                                        * Referenced by: '<S10>/Gain'
                                         */
   real_T Gain1_Gain;                   /* Expression: pi/180
                                         * Referenced by: '<S2>/Gain1'
                                         */
-  real_T Gain_Gain_lg;                 /* Expression: 180/pi
-                                        * Referenced by: '<S6>/Gain'
+  real_T Gain1_Gain_i;                 /* Expression: pi/180
+                                        * Referenced by: '<S3>/Gain1'
+                                        */
+  real_T Gain1_Gain_n;                 /* Expression: pi/180
+                                        * Referenced by: '<S4>/Gain1'
                                         */
   real_T Integrator_IC;                /* Expression: 0
-                                        * Referenced by: '<S3>/Integrator'
+                                        * Referenced by: '<S5>/Integrator'
                                         */
   real_T Integrator_UpperSat;          /* Expression: inf
-                                        * Referenced by: '<S3>/Integrator'
+                                        * Referenced by: '<S5>/Integrator'
                                         */
   real_T Integrator_LowerSat;          /* Expression: -inf
-                                        * Referenced by: '<S3>/Integrator'
+                                        * Referenced by: '<S5>/Integrator'
                                         */
   real_T elevation_ref_Value;          /* Expression: 0
                                         * Referenced by: '<Root>/elevation_ref'
@@ -1186,19 +1194,19 @@ struct P_helicopterD2_T_ {
                                         * Referenced by: '<S1>/Front gain'
                                         */
   real_T Gain_Gain_a1;                 /* Expression: 180/pi
-                                        * Referenced by: '<S12>/Gain'
+                                        * Referenced by: '<S13>/Gain'
                                         */
   real_T BackmotorSaturation_UpperSat; /* Expression: 5
-                                        * Referenced by: '<S4>/Back motor: Saturation'
+                                        * Referenced by: '<S6>/Back motor: Saturation'
                                         */
   real_T BackmotorSaturation_LowerSat; /* Expression: -5
-                                        * Referenced by: '<S4>/Back motor: Saturation'
+                                        * Referenced by: '<S6>/Back motor: Saturation'
                                         */
   real_T FrontmotorSaturation_UpperSat;/* Expression: 5
-                                        * Referenced by: '<S4>/Front motor: Saturation'
+                                        * Referenced by: '<S6>/Front motor: Saturation'
                                         */
   real_T FrontmotorSaturation_LowerSat;/* Expression: -5
-                                        * Referenced by: '<S4>/Front motor: Saturation'
+                                        * Referenced by: '<S6>/Front motor: Saturation'
                                         */
   int32_T HILInitialize_CKChannels[3];
                                  /* Computed Parameter: HILInitialize_CKChannels
@@ -1228,7 +1236,7 @@ struct P_helicopterD2_T_ {
                                   */
   int32_T HILReadEncoderTimebase_Clock;
                              /* Computed Parameter: HILReadEncoderTimebase_Clock
-                              * Referenced by: '<S4>/HIL Read Encoder Timebase'
+                              * Referenced by: '<S6>/HIL Read Encoder Timebase'
                               */
   uint32_T HILInitialize_AIChannels[8];
                                  /* Computed Parameter: HILInitialize_AIChannels
@@ -1252,11 +1260,11 @@ struct P_helicopterD2_T_ {
                                   */
   uint32_T HILReadEncoderTimebase_Channels[3];
                           /* Computed Parameter: HILReadEncoderTimebase_Channels
-                           * Referenced by: '<S4>/HIL Read Encoder Timebase'
+                           * Referenced by: '<S6>/HIL Read Encoder Timebase'
                            */
   uint32_T HILReadEncoderTimebase_SamplesI;
                           /* Computed Parameter: HILReadEncoderTimebase_SamplesI
-                           * Referenced by: '<S4>/HIL Read Encoder Timebase'
+                           * Referenced by: '<S6>/HIL Read Encoder Timebase'
                            */
   boolean_T HILInitialize_Active;    /* Computed Parameter: HILInitialize_Active
                                       * Referenced by: '<Root>/HIL Initialize'
@@ -1369,14 +1377,14 @@ struct P_helicopterD2_T_ {
                                    */
   boolean_T HILReadEncoderTimebase_Active;
                             /* Computed Parameter: HILReadEncoderTimebase_Active
-                             * Referenced by: '<S4>/HIL Read Encoder Timebase'
+                             * Referenced by: '<S6>/HIL Read Encoder Timebase'
                              */
   boolean_T HILWriteAnalog_Active;  /* Computed Parameter: HILWriteAnalog_Active
-                                     * Referenced by: '<S4>/HIL Write Analog'
+                                     * Referenced by: '<S6>/HIL Write Analog'
                                      */
   uint8_T HILReadEncoderTimebase_Overflow;
                           /* Computed Parameter: HILReadEncoderTimebase_Overflow
-                           * Referenced by: '<S4>/HIL Read Encoder Timebase'
+                           * Referenced by: '<S6>/HIL Read Encoder Timebase'
                            */
 };
 
@@ -1532,17 +1540,18 @@ extern RT_MODEL_helicopterD2_T *const helicopterD2_M;
  * '<Root>' : 'helicopterD2'
  * '<S1>'   : 'helicopterD2/Conversion'
  * '<S2>'   : 'helicopterD2/Degrees to Radians'
- * '<S3>'   : 'helicopterD2/Elevation controller'
- * '<S4>'   : 'helicopterD2/Helicopter_interface'
- * '<S5>'   : 'helicopterD2/Pitch controller'
- * '<S6>'   : 'helicopterD2/Radians to Degrees'
- * '<S7>'   : 'helicopterD2/Elevation controller/If Action Subsystem'
- * '<S8>'   : 'helicopterD2/Helicopter_interface/Elevation rad to deg'
- * '<S9>'   : 'helicopterD2/Helicopter_interface/Elevation rate rad to deg'
- * '<S10>'  : 'helicopterD2/Helicopter_interface/Pitch rad to deg'
- * '<S11>'  : 'helicopterD2/Helicopter_interface/Pitch rate rad to deg'
- * '<S12>'  : 'helicopterD2/Helicopter_interface/Pitch rate rad to deg1'
- * '<S13>'  : 'helicopterD2/Helicopter_interface/Travel rad to deg'
- * '<S14>'  : 'helicopterD2/Helicopter_interface/Travel rate  rad to deg'
+ * '<S3>'   : 'helicopterD2/Degrees to Radians1'
+ * '<S4>'   : 'helicopterD2/Degrees to Radians2'
+ * '<S5>'   : 'helicopterD2/Elevation controller'
+ * '<S6>'   : 'helicopterD2/Helicopter_interface'
+ * '<S7>'   : 'helicopterD2/Pitch controller'
+ * '<S8>'   : 'helicopterD2/Elevation controller/If Action Subsystem'
+ * '<S9>'   : 'helicopterD2/Helicopter_interface/Elevation rad to deg'
+ * '<S10>'  : 'helicopterD2/Helicopter_interface/Elevation rate rad to deg'
+ * '<S11>'  : 'helicopterD2/Helicopter_interface/Pitch rad to deg'
+ * '<S12>'  : 'helicopterD2/Helicopter_interface/Pitch rate rad to deg'
+ * '<S13>'  : 'helicopterD2/Helicopter_interface/Pitch rate rad to deg1'
+ * '<S14>'  : 'helicopterD2/Helicopter_interface/Travel rad to deg'
+ * '<S15>'  : 'helicopterD2/Helicopter_interface/Travel rate  rad to deg'
  */
 #endif                                 /* RTW_HEADER_helicopterD2_h_ */
