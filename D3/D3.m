@@ -1,115 +1,119 @@
 % TTK4135 - Helicopter lab
-% Hints/template for problem 3.
+% Hints/template for problem 2.
 % Updated spring 2018, Andreas L. Fl�ten
 
-%% Initialization and model definition
+%% Initialization
 clc 
 clear 
-init01; % Change this to the init file corresponding to your helicopter
+init01;
 
-A_c = [0 1 0 0;0 0, -K_2 0; 0 0 0 1;0 0, -K_1*K_pp, -K_1*K_pd];
-B_c = [0;0;0;K_1*K_pp];
+%% Continuous time state space:
+A_c = [0  1          0          0;
+       0  0       -K_2          0; 
+       0  0          0          1;
+       0  0  -K_1*K_pp  -K_1*K_pd ];
 
-% Discrete time system model. x = [lambda r p p_dot]'
-delta_t	= 0.25; % sampling time
-A1 = eye(4) + delta_t*A_c;
-B1 = B_c*delta_t;
+B_c = [0  0  0  K_1*K_pp].';
 
-% Number of states and inputs
-mx = size(A1,2); % Number of states (number of columns in A)
-mu = size(B1,2); % Number of inputs(number of columns in B)
+nx = size(A_c, 2);          % Number of states
+nu = size(B_c, 2);          % Number of inputs
 
-% Initial values
-x1_0 = pi;                               % Lambda
-x2_0 = 0;                               % r
-x3_0 = 0;                               % p
-x4_0 = 0;                               % p_dot
-x0 = [x1_0 x2_0 x3_0 x4_0]';           % Initial values
+%% Forward Euler discretization:
+delta_t	= 0.25;             % [s]
+A_d = eye(nx) + delta_t*A_c;
+B_d = delta_t*B_c;
 
-% Time horizon and initialization
-N  = 100;                                  % Time horizon for states
-M  = N;                                 % Time horizon for inputs
-z  = zeros(N*mx+M*mu,1);                % Initialize z for the whole horizon
-z0 = z;                                 % Initial value for optimization
+%% Time horizon:
+N  = 100;                   % Time horizon for states
+M  = N;                     % Time horizon for inputs
 
-% Bounds
-ul 	    = -30*pi/180;                   % Lower bound on control
-uu 	    = 30*pi/180;                   % Upper bound on control
+n = N*nx+M*nu;
 
-xl      = -Inf*ones(mx,1);              % Lower bound on states (no bound)
-xu      = Inf*ones(mx,1);               % Upper bound on states (no bound)
-xl(3)   = ul;                           % Lower bound on state x3
-xu(3)   = uu;                           % Upper bound on state x3
+%% Bounds:
+pk    = deg2rad(30);        % Absolute bound on pitch
+ul 	  = -pk;                % Lower bound on control
+uu 	  =  pk;                % Upper bound on control
 
-% Generate constraints on measurements and inputs
-[vlb,vub]       = gen_constraints(N,M,xl,xu,ul,uu);    % hint: gen_constraints
-vlb(N*mx+M*mu)  = 0;                    % We want the last input to be zero
-vub(N*mx+M*mu)  = 0;                    % We want the last input to be zero
+xl    = -Inf*ones(nx, 1);   % Lower bound on states
+xu    =  Inf*ones(nx, 1);   % Upper bound on states
+xl(3) = ul;                 % Lower bound on pitch
+xu(3) = uu;                 % Upper bound on pitch
 
-% Generate the matrix Q and the vector c (objecitve function weights in the QP problem) 
-Q1 = zeros(mx,mx);
-Q1(1,1) = .1;                            % Weight on state x1
-Q1(2,2) = 0;                            % Weight on state x2
-Q1(3,3) = 0;                            % Weight on state x3
-Q1(4,4) = 0;                            % Weight on state x4
-P1 = 0;                                % Weight on input
-Q = gen_q(Q1,P1,N,M);                                  % Generate Q, hint: gen_q
-c = zeros((mx+mu)*N,1);                                  % Generate c, this is the linear constant term in the QP
+% Bounds on states and inputs
+[vlb, vub] = gen_constraints(N, M, xl, xu, ul, uu);
+vlb(n)     = 0;             % Want the last input to be zero
+vub(n)     = 0;             % Want the last input to be zero
 
+%% Initial values:
+lambda_0 = pi;
+lambda_f = 0;
+
+x0 = [lambda_0; 0 ; 0; 0];
+
+z  = zeros(n, 1);           % Initialize z for horizon
+z0 = z;                     % Initial value
+
+%% Matrices in objective function:
+q = 1;                      % Weight on input (0.1, 1, 10)
+Q1 = diag([1 0 0 0]);       % Weight on states
+
+Q = gen_q(Q1, q, N, M);
+c = zeros(n, 1);            % Linear term
+
+%% Linear constraints for objective function:
+Aeq = gen_aeq(A_d, B_d, N, nx, nu);
+beq = [A_d*x0; 
+       zeros(nx*(N-1), 1)];
+   
 %% LQR
+LQR_Q = diag([10; 5; .1; .1]);  %Rank = nx
+LQR_R = diag(.1);               %Rank = nu
 
-LQR_Q = diag([10;5;.1;.1]);  %Rank = mx
-LQR_R = diag(.1);        %Rank = mu
-
-K = dlqr(A1,B1,LQR_Q,LQR_R);
-
-%% Generate system matrixes for linear model
-Aeq = gen_aeq(A1,B1,N,mx,mu);             % Generate A, hint: gen_aeq
-beq = [A1*x0;zeros(4*N-4,1)];             % Generate b
+K = dlqr(A_d, B_d, LQR_Q, LQR_R);
 
 %% Solve QP problem with linear model
 tic
-[z,lambda] = quadprog(Q,c,[],[],Aeq,beq,vlb,vub); % hint: quadprog. Type 'doc quadprog' for more info 
+[z, lambda] = quadprog(2*Q, c, [], [], Aeq, beq, vlb, vub);
 t1=toc;
 
 % Calculate objective value
 phi1 = 0.0;
-PhiOut = zeros(N*mx+M*mu,1);
-for i=1:N*mx+M*mu
-  phi1=phi1+Q(i,i)*z(i)*z(i);
+PhiOut = zeros(n, 1);
+for i=1:n
+  phi1 = phi1 + Q(i, i)*z(i)*z(i);
   PhiOut(i) = phi1;
 end
 
-%% Extract control inputs and states
-u  = [z(N*mx+1:N*mx+M*mu);z(N*mx+M*mu)]; % Control input from solution
+%% Extract control inputs and states from solution
+u  = [z(N*nx+1:n); z(n)];   % Control input
+x1 = [x0(1); z(1:nx:N*nx)];              
+x2 = [x0(2); z(2:nx:N*nx)];              
+x3 = [x0(3); z(3:nx:N*nx)];              
+x4 = [x0(4); z(4:nx:N*nx)];              
 
-x1 = [x0(1);z(1:mx:N*mx)];              % State x1 from solution
-x2 = [x0(2);z(2:mx:N*mx)];              % State x2 from solution
-x3 = [x0(3);z(3:mx:N*mx)];              % State x3 from solution
-x4 = [x0(4);z(4:mx:N*mx)];              % State x4 from solution
+padding_t = 5;      % [s]
+padding_n = padding_t/delta_t;
 
-num_variables = 5/delta_t;
-zero_padding = zeros(num_variables,1);
-unit_padding  = ones(num_variables,1);
+zero_padding = zeros(padding_n, 1);
+unit_padding  = ones(padding_n, 1);
 
-u   = [zero_padding; u; zero_padding];
-x1  = [pi*unit_padding; x1; zero_padding];
-x2  = [zero_padding; x2; zero_padding];
-x3  = [zero_padding; x3; zero_padding];
-x4  = [zero_padding; x4; zero_padding];
+u   = [zero_padding;            u;  zero_padding];
+x1  = [lambda_0*unit_padding;  x1;  zero_padding];
+x2  = [zero_padding;           x2;  zero_padding];
+x3  = [zero_padding;           x3;  zero_padding];
+x4  = [zero_padding;           x4;  zero_padding];
 
 x = [x1 x2 x3 x4];
 
-
-time_steps = [0:delta_t:(N+2*num_variables)*delta_t];
+%% Export to simulink
+time_steps = [0:delta_t:(N + 2*padding_n)*delta_t].';
 ts_u = timeseries(u, time_steps);
 ts_x = timeseries(x, time_steps);
-
 
 %% Plotting
 t = 0:delta_t:delta_t*(length(u)-1);
 
-figure(3)
+figure(2)
 subplot(511)
 stairs(t,u),grid
 ylabel('u')
@@ -125,3 +129,9 @@ ylabel('p')
 subplot(515)
 plot(t,x4,'m',t,x4','mo'),grid
 xlabel('tid (s)'),ylabel('pdot')
+
+%% Values to be used in plotting:
+
+lambdaQ01 = x1;
+
+

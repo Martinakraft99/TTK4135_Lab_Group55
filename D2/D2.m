@@ -51,7 +51,7 @@ lambda_f = 0;
 x0 = [lambda_0; 0 ; 0; 0];
 
 z  = zeros(n, 1);           % Initialize z for horizon
-z0 = z;                     % Initial value for optimization
+z0 = z;                     % Initial value
 
 %% Matrices in objective function:
 q = 10;                     % Weight on input (0.1, 1, 10)
