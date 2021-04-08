@@ -1,10 +1,3 @@
-% TTK4135 - Helicopter lab
-% Hints/template for problem 2.
-% Updated spring 2018, Andreas L. Fl�ten
-
-%% Initialization
-clc 
-clear 
 init01;
 
 %% Continuous time state space:
@@ -54,7 +47,7 @@ z  = zeros(n, 1);           % Initialize z for horizon
 z0 = z;                     % Initial value for optimization
 
 %% Matrices in objective function:
-q = 10;                     % Weight on input (0.1, 1, 10)
+q = 0.1;                    % Weight on input (0.1, 1, 10)
 Q1 = diag([1 0 0 0]);       % Weight on states
 
 Q = gen_q(Q1, q, N, M);
@@ -80,7 +73,7 @@ end
 
 %% Extract control inputs and states from solution
 u  = [z(N*nx+1:n); z(n)];   % Control input
-x1 = [x0(1); z(1:nx:N*nx)];              
+lambda01 = [x0(1); z(1:nx:N*nx)];              
 x2 = [x0(2); z(2:nx:N*nx)];              
 x3 = [x0(3); z(3:nx:N*nx)];              
 x4 = [x0(4); z(4:nx:N*nx)];              
@@ -92,7 +85,7 @@ zero_padding = zeros(padding_n, 1);
 unit_padding  = ones(padding_n, 1);
 
 u   = [zero_padding;            u;  zero_padding];
-x1  = [lambda_0*unit_padding;  x1;  zero_padding];
+lambda01  = [lambda_0*unit_padding;  lambda01;  zero_padding];
 x2  = [zero_padding;           x2;  zero_padding];
 x3  = [zero_padding;           x3;  zero_padding];
 x4  = [zero_padding;           x4;  zero_padding];
@@ -103,26 +96,3 @@ ts_u = timeseries(u, time_steps);
 
 %% Plotting
 t = 0:delta_t:delta_t*(length(u)-1);
-
-figure(2)
-subplot(511)
-stairs(t,u),grid
-ylabel('u')
-subplot(512)
-plot(t,x1,'m',t,x1,'mo'),grid
-ylabel('lambda')
-subplot(513)
-plot(t,x2,'m',t,x2','mo'),grid
-ylabel('r')
-subplot(514)
-plot(t,x3,'m',t,x3,'mo'),grid
-ylabel('p')
-subplot(515)
-plot(t,x4,'m',t,x4','mo'),grid
-xlabel('tid (s)'),ylabel('pdot')
-
-%% Values to be used in plotting:
-
-lambdaQ01 = x1;
-
-
