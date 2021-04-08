@@ -70,12 +70,6 @@ Q1 = diag([1 0 0 0 0 0]);   % Weight on states
 Q = gen_q(Q1, q, N, M);
 c = zeros(n, 1);            % Linear term
 
-% Generate the matrix Q and the vector c (objecitve function weights in the QP problem) 
-% Qt = diag([1,1,1,1,10, 1]);
-% Rt = diag([.1,.1]);
-% G = gen_q(Qt,Rt,N,M);                                  % Generate Q, hint: gen_q
-% c = zeros((mx+mu)*N,1);                                  % Generate c, this is the linear constant term in the QP
-
 %% LQR
 LQR_Q = diag([10; 5; .1; .1; 10; 10]);  %Rank = nx
 LQR_R = diag([.1;.1]);                  %Rank = nu
@@ -89,7 +83,7 @@ beq = [A_d*x0;
 
 %% Solve QP problem with linear model
 tic
-ofun = @(z) 1/2 * z.'* Q * z;
+ofun = @(z) z.'* Q * z;
 
 % [z,lambda] = quadprog(G,c,[],[],Aeq,beq,vlb,vub); % hint: quadprog. Type 'doc quadprog' for more info 
 options = optimoptions('fmincon','MaxFunctionEvaluations',1e4);
