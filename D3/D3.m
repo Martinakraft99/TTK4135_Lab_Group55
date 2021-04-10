@@ -40,9 +40,9 @@ xl(3) = ul;                 % Lower bound on pitch
 xu(3) = uu;                 % Upper bound on pitch
 
 % Bounds on states and inputs
-[vlb, vub] = gen_constraints(N, M, xl, xu, ul, uu);
-vlb(n)     = 0;             % Want the last input to be zero
-vub(n)     = 0;             % Want the last input to be zero
+[zlb, zub] = gen_constraints(N, M, xl, xu, ul, uu);
+zlb(n)     = 0;             % Want the last input to be zero
+zub(n)     = 0;             % Want the last input to be zero
 
 %% Initial values:
 lambda_0 = pi;
@@ -51,13 +51,12 @@ lambda_f = 0;
 x0 = [lambda_0; 0 ; 0; 0];
 
 z  = zeros(n, 1);           % Initialize z for horizon
-z0 = z;                     % Initial value
 
 %% Matrices in objective function:
 q = 1;                      % Weight on input (0.1, 1, 10)
-Q1 = diag([1 0 0 0]);       % Weight on states
+Q = diag([1 0 0 0]);        % Weight on states
 
-Q = gen_q(Q1, q, N, M);
+G = gen_q(Q, q, N, M);
 c = zeros(n, 1);            % Linear term
 
 %% Linear constraints for objective function:
@@ -73,14 +72,14 @@ K = dlqr(A_d, B_d, LQR_Q, LQR_R);
 
 %% Solve QP problem with linear model
 tic
-[z, lambda] = quadprog(2*Q, c, [], [], Aeq, beq, vlb, vub);
+[z, lambda] = quadprog(2*G, c, [], [], Aeq, beq, zlb, zub);
 t1=toc;
 
 % Calculate objective value
 phi1 = 0.0;
 PhiOut = zeros(n, 1);
 for i=1:n
-  phi1 = phi1 + Q(i, i)*z(i)*z(i);
+  phi1 = phi1 + G(i, i)*z(i)*z(i);
   PhiOut(i) = phi1;
 end
 

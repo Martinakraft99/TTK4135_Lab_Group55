@@ -7,9 +7,9 @@
  *
  * Code generation for model "helicopterD4".
  *
- * Model version              : 11.12
+ * Model version              : 11.13
  * Simulink Coder version : 9.4 (R2020b) 29-Jul-2020
- * C source code generated on : Thu Apr  8 19:37:48 2021
+ * C source code generated on : Sat Apr 10 18:17:56 2021
  *
  * Target selection: quarc_win64.tlc
  * Note: GRT includes extra infrastructure and instrumentation for prototyping
@@ -926,7 +926,7 @@ typedef struct {
   } _PWORK_l;                          /* '<Root>/            ' */
 
   struct {
-    void *LoggedData;
+    void *LoggedData[2];
   } Scope_PWORK;                       /* '<Root>/Scope' */
 
   struct {

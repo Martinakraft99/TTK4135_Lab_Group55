@@ -4,6 +4,10 @@ lambda_ref_Q10;
 lambda_ref_Q1;
 lambda_ref_Q01;
 
+drift = load('drift.mat');
+
+
+
 % Load encoder values
 plots = [load('q10.mat'), load('q1.mat'), load('q_1.mat')];
 
@@ -13,21 +17,23 @@ labels = ['$q=10$ '; '$q=1$  '; '$q=0.1$'; 'optimal'];
 
 figure(1)
 
-correction = @(T) - pi/5*(1-exp(-T/20)).*T;
-correction_offset = @(T) pi;
+correction = @(T) - pi/5*(1-exp(-T/21)).*T;
+correction_offset = @(T) 0;
 
 numX = size(X,1);
 for i = 1:numX
-    plot(T, X(i,:) + correction(T), 'LineWidth', 2)
+    plot(T, X(i,:) -drift.ans(2,:) + pi, 'LineWidth', 2)
     hold on
 end
 
 figure(1)
-plot(t,lambda10, '--b', 'LineWidth', 2)
+xline(-5,'--','Color', 'black', 'LineWidth', 1.5);
 hold on
-plot(t,lambda1, '--r', 'LineWidth', 2)
+plot(t,lambda10, '--', 'LineWidth', 1.5, 'Color' ,[0 0.45 0.74])
 hold on
-plot(t,lambda01, '--y', 'LineWidth', 2)
+plot(t,lambda1, '--', 'LineWidth', 1.5, 'Color' ,[0.85 0.33 0.1])
+hold on
+plot(t,lambda01, '--', 'LineWidth', 1.5, 'Color' ,[0.93 0.69 0.13])
 hold on
 % plot(T, correction(T))
 
@@ -42,10 +48,12 @@ legend(labels, 'interpreter', 'latex')
 ylabel('$\lambda$ [rad]', 'interpreter', 'latex')
 xlabel('$t$ [s]', 'interpreter', 'latex')
 
-yticks((0:10) * pi);
-yticklabels( string(0:10) + "\pi" )
-
-
+yticks([-3*pi -5*pi/2 -2*pi -3*pi/2 -pi -pi/2 0 pi/2 pi 3*pi/2 2*pi 5*pi/2 3*pi 7*pi/2 4*pi])
+yticklabels({'-3\pi','-5\pi/2','-2\pi','-3\pi/2','-\pi','-\pi/2','0','\pi/2','\pi','3\pi/2','2\pi','5\pi/2','3\pi','7\pi/2','4\pi'})
+% 
+% yticks((0:10) * pi);
+% yticklabels( string(0:10) + "\pi" )
+ylim([-pi/2 3*pi/2])
 xlim([0 25])
 grid on
 

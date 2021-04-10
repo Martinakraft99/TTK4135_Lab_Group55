@@ -43,8 +43,8 @@ lambda_f = 0;
 x0 = [lambda_0; 0; 0; 0; 0; 0];
 
 z  = zeros(n, 1);           % Initialize z for horizon
-z0 = z;                     % Initial value for optimization
-z0(1:nx) = x0; 
+z0 = z                     % Initial value for optimization
+z(1:nx) = x0; 
 
 %% Bounds
 
@@ -59,25 +59,22 @@ xl(3) = ul(1);              % Lower bound on pitch
 xu(3) = uu(1);              % Upper bound on pitch
 
 % Try constraint on e dot: 0.1, 0.05 and 0.025
-% xl(6) = 0.1*ul(1);              % Lower bound on elevation dot
-% xu(6) = 0.1*uu(1);              % Upper bound on elevation dot
-
-xl(2) = 0.3*ul(1);              % Lower bound on travel dot
-xu(2) = 0.3*uu(1);              % Upper bound on travel dot
+% xl(6) = 0.025*ul(1);              % Lower bound on elevation dot
+% xu(6) = 0.025*uu(1);              % Upper bound on elevation dot
 
 % Generate constraints on measurements and inputs
 [zlb,zub] = gen_constraints(N, M, xl, xu, ul, uu);
 zlb(n)    = 0;              % Want the last input to be zero
 zub(n)    = 0;              % Want the last input to be zero
 
-% zlb(nx*N-1) = 0;            % Want the last elevation to be zero
-% zub(nx*N-1) = 0;            % Want the last elevation to be zero
+zlb(nx*N-1) = 0;            % Want the last elevation to be zero
+zub(nx*N-1) = 0;            % Want the last elevation to be zero
 
-% zlb(nx*N-5) = lambda_f;     % Want the last travel to be lambda_f
-% zub(nx*N-5) = lambda_f;     % Want the last travel to be lambda_f
+zlb(nx*N-5) = lambda_f;     % Want the last travel to be lambda_f
+zub(nx*N-5) = lambda_f;     % Want the last travel to be lambda_f
 
-% zlb(nx*N-4) = 0;            % Want the last travel_dot to be 0
-% zub(nx*N-4) = 0;            % Want the last travel_dot to be 0
+zlb(nx*N-4) = 0;            % Want the last travel_dot to be 0
+zub(nx*N-4) = 0;            % Want the last travel_dot to be 0
 
 %% Matrices in objective function:
 q = diag([1 1]);            % Weight on inputs p, e
@@ -87,8 +84,8 @@ G = gen_q(Q, q, N, M);
 c = zeros(n, 1);            % Linear term
 
 %% LQR
-LQR_Q = diag([10; 5; 1; .1; 10; .1]);  %Rank = nx
-LQR_R = diag([.1; .1]);                %Rank = nu
+LQR_Q = diag([5; 5; 10; .1; 1; .1]);  %Rank = nx
+LQR_R = diag([.1; .5]);                  %Rank = nu
 
 K = dlqr(A_d, B_d, LQR_Q, LQR_R)
 

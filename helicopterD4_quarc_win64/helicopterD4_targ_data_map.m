@@ -800,63 +800,63 @@
 	
 	  ;% helicopterD4_DW.e_PWORK.LoggedData
 	  section.data(6).logicalSrcIdx = 20;
-	  section.data(6).dtTransOffset = 5;
+	  section.data(6).dtTransOffset = 6;
 	
 	  ;% helicopterD4_DW.p_PWORK.LoggedData
 	  section.data(7).logicalSrcIdx = 21;
-	  section.data(7).dtTransOffset = 7;
+	  section.data(7).dtTransOffset = 8;
 	
 	  ;% helicopterD4_DW.ElevationScopedegs_PWORK.LoggedData
 	  section.data(8).logicalSrcIdx = 22;
-	  section.data(8).dtTransOffset = 9;
+	  section.data(8).dtTransOffset = 10;
 	
 	  ;% helicopterD4_DW.ElevationScopedeg_PWORK.LoggedData
 	  section.data(9).logicalSrcIdx = 23;
-	  section.data(9).dtTransOffset = 10;
+	  section.data(9).dtTransOffset = 11;
 	
 	  ;% helicopterD4_DW.PitchScopedeg_PWORK.LoggedData
 	  section.data(10).logicalSrcIdx = 24;
-	  section.data(10).dtTransOffset = 11;
+	  section.data(10).dtTransOffset = 12;
 	
 	  ;% helicopterD4_DW.PtichrateScopedegs_PWORK.LoggedData
 	  section.data(11).logicalSrcIdx = 25;
-	  section.data(11).dtTransOffset = 12;
+	  section.data(11).dtTransOffset = 13;
 	
 	  ;% helicopterD4_DW.PtichrateScopedegs1_PWORK.LoggedData
 	  section.data(12).logicalSrcIdx = 26;
-	  section.data(12).dtTransOffset = 13;
+	  section.data(12).dtTransOffset = 14;
 	
 	  ;% helicopterD4_DW.TravelrateScopedegs_PWORK.LoggedData
 	  section.data(13).logicalSrcIdx = 27;
-	  section.data(13).dtTransOffset = 14;
+	  section.data(13).dtTransOffset = 15;
 	
 	  ;% helicopterD4_DW.TravelScopedeg_PWORK.LoggedData
 	  section.data(14).logicalSrcIdx = 28;
-	  section.data(14).dtTransOffset = 15;
+	  section.data(14).dtTransOffset = 16;
 	
 	  ;% helicopterD4_DW.Backmotor_PWORK.LoggedData
 	  section.data(15).logicalSrcIdx = 29;
-	  section.data(15).dtTransOffset = 16;
+	  section.data(15).dtTransOffset = 17;
 	
 	  ;% helicopterD4_DW.Frontmotor_PWORK.LoggedData
 	  section.data(16).logicalSrcIdx = 30;
-	  section.data(16).dtTransOffset = 17;
+	  section.data(16).dtTransOffset = 18;
 	
 	  ;% helicopterD4_DW.HILWriteAnalog_PWORK
 	  section.data(17).logicalSrcIdx = 31;
-	  section.data(17).dtTransOffset = 18;
+	  section.data(17).dtTransOffset = 19;
 	
 	  ;% helicopterD4_DW.Scope_PWORK_a.LoggedData
 	  section.data(18).logicalSrcIdx = 32;
-	  section.data(18).dtTransOffset = 19;
+	  section.data(18).dtTransOffset = 20;
 	
 	  ;% helicopterD4_DW.Scope1_PWORK.LoggedData
 	  section.data(19).logicalSrcIdx = 33;
-	  section.data(19).dtTransOffset = 20;
+	  section.data(19).dtTransOffset = 21;
 	
 	  ;% helicopterD4_DW.Scope2_PWORK.LoggedData
 	  section.data(20).logicalSrcIdx = 34;
-	  section.data(20).dtTransOffset = 21;
+	  section.data(20).dtTransOffset = 22;
 	
       nTotData = nTotData + section.nData;
       dworkMap.sections(4) = section;
@@ -972,8 +972,8 @@
   ;%
 
 
-  targMap.checksum0 = 2752760392;
-  targMap.checksum1 = 865314332;
-  targMap.checksum2 = 442949977;
-  targMap.checksum3 = 2655801359;
+  targMap.checksum0 = 1899614748;
+  targMap.checksum1 = 2151363402;
+  targMap.checksum2 = 2246188042;
+  targMap.checksum3 = 3898633219;
 
